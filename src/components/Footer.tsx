@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useLang } from "@/lib/i18n/LanguageContext";
 import { t } from "@/lib/i18n/translations";
 
@@ -35,18 +36,13 @@ export default function Footer() {
             </div>
             <p className="text-white/55 text-sm leading-[1.8] max-w-xs">{tr.tagline}</p>
             <div className="mt-6 flex items-center gap-3">
-              <svg viewBox="0 0 50 50" className="w-8 h-8 text-sage opacity-60" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="25" cy="25" r="22" />
-                <circle cx="25" cy="25" r="8" />
-                {Array.from({ length: 6 }).map((_, i) => {
-                  const angle = (i * 60 * Math.PI) / 180;
-                  const x1 = 25 + 8 * Math.cos(angle);
-                  const y1 = 25 + 8 * Math.sin(angle);
-                  const x2 = 25 + 22 * Math.cos(angle);
-                  const y2 = 25 + 22 * Math.sin(angle);
-                  return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />;
-                })}
-              </svg>
+              <Image
+                src="/rotary-international-logo.png"
+                alt="Rotary International"
+                width={32}
+                height={32}
+                className="opacity-60"
+              />
               <span className="text-white/40 text-xs tracking-wide">{tr.motto}</span>
             </div>
           </div>
