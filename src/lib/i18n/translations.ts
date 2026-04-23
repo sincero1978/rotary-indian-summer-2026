@@ -187,8 +187,8 @@ export const t = {
       title: "Indian Summer",
       titleAccent: "Rallye",
       badge: "Luxembourg \u00b7 6 septembre 2026",
-      p1: "Un parcours automobile \u00e0 travers les paysages dor\u00e9s de l\u2019automne luxembourgeois. Le Rotary Club Bascharage-Kordall organise son 9e Rallye Caritative, le \u00ab\u00a0ROTARY INDIAN SUMMER TOUR\u00a0\u00bb, d\u00e9di\u00e9 aux voitures classiques et de sport.",
-      p2: "L\u2019\u00e9v\u00e9nement revient avec enthousiasme et a \u00e9t\u00e9 revu avec quelques ajustements pour offrir une exp\u00e9rience encore plus passionnante aux amateurs de voitures historiques et de sport.",
+      p1: "Un parcours automobile \u00e0 travers les paysages dor\u00e9s de l\u2019automne luxembourgeois. Le Rotary Club Bascharage-Kordall organise son 9e Rallye Caritatif, le \u00ab\u00a0ROTARY INDIAN SUMMER TOUR\u00a0\u00bb, d\u00e9di\u00e9 aux voitures classiques et de sport.",
+      p2: "L\u2019\u00e9v\u00e9nement a \u00e9t\u00e9 revu avec quelques ajustements pour offrir une exp\u00e9rience encore plus passionnante aux amateurs de voitures historiques et de sport.",
       cta1: "Inscrire votre v\u00e9hicule et pilote(s)",
       cta2: "D\u00e9couvrir le parcours",
       scroll: "D\u00e9filer",
@@ -199,10 +199,10 @@ export const t = {
       eyebrow: "\u00c0 propos du Rallye",
       title1: "9e Rotary Indian",
       title2: "Summer Tour",
-      p1: "Le Rotary Club de Bascharage-Kordall organise son 9e \u00ab\u00a0Rotary Indian Summer Tour\u00a0\u00bb, rallye caritative annuel d\u00e9di\u00e9 aux voitures classiques et de sport, le 6 septembre 2026.",
-      p2: "L\u2019\u00e9v\u00e9nement revient avec enthousiasme et a \u00e9t\u00e9 revu avec quelques ajustements pour offrir une exp\u00e9rience encore plus attrayante aux amateurs d\u2019automobiles historiques et de sport.",
+      p1: "Le Rotary Club de Bascharage-Kordall organise son 9e \u00ab\u00a0Rotary Indian Summer Tour\u00a0\u00bb, rallye caritatif annuel d\u00e9di\u00e9 aux voitures classiques et de sport, le 6 septembre 2026.",
+      p2: "L\u2019\u00e9v\u00e9nement a \u00e9t\u00e9 revu avec quelques ajustements pour offrir une exp\u00e9rience encore plus attrayante aux amateurs d\u2019automobiles historiques et de sport.",
       p3: "L\u2019objectif premier de Rotary International est de tirer parti des relations et des contacts pour servir le bien commun et promouvoir la compr\u00e9hension entre les peuples, la bonne volont\u00e9 et le respect de la paix \u00e0 travers des relations amicales entre membres de toutes professions, unis par l\u2019id\u00e9al de service.",
-      p4: "C\u2019est dans cet esprit que notre club organise le Rotary Indian Summer Rally, un rallye pour les passionn\u00e9s de voitures historiques et de sport, un \u00e9v\u00e9nement convivial dont les b\u00e9n\u00e9fices soutiendront les activit\u00e9s caritatives de notre club.",
+      p4: "C\u2019est dans cet esprit que notre club organise le Rotary Indian Summer Rally, un rallye pour les passionn\u00e9s de voitures historiques et de sport, un \u00e9v\u00e9nement convivial, dont les b\u00e9n\u00e9fices soutiendront les activit\u00e9s caritatives de notre club.",
       p5: "Tous les b\u00e9n\u00e9fices seront d\u00e9di\u00e9s \u00e0 des causes sociales et humanitaires.",
       date: "Dimanche, 6 septembre 2026",
       location: "D\u00e9part & Arriv\u00e9e : Mess-Caf\u00e9 / Reckange-sur-Mess",
@@ -218,7 +218,7 @@ export const t = {
     highlights: {
       eyebrow: "Points forts du Rallye",
       title: "Tout ce que vous devez savoir",
-      subtitle: "Chaque d\u00e9tail pens\u00e9, chaque route choisie pour sa beaut\u00e9. L\u2019Indian Summer Rally est con\u00e7u pour \u00eatre l\u2019\u00e9v\u00e9nement automobile de l\u2019ann\u00e9e.",
+      subtitle: "Chaque d\u00e9tail pens\u00e9, chaque route choisie pour sa beaut\u00e9, l\u2019Indian Summer Rally est con\u00e7u pour \u00eatre l\u2019\u00e9v\u00e9nement automobile de l\u2019ann\u00e9e.",
       cards: [
         {
           title: "Paysages spectaculaires",
@@ -237,7 +237,7 @@ export const t = {
         },
         {
           title: "Fraternit\u00e9 Rotary",
-          body: "Organis\u00e9 par le Rotary Club Bascharage-Kordall, dont tous les b\u00e9n\u00e9fices nets soutiennent des projets caritatifs locaux et internationaux.",
+          body: "Organis\u00e9 par le Rotary Club Bascharage-Kordall, tous les b\u00e9n\u00e9fices nets soutiendront des projets caritatifs locaux et internationaux.",
           accent: "Ensemble pour le bien",
         },
         {
@@ -256,7 +256,7 @@ export const t = {
       eyebrow: "L\u2019exp\u00e9rience",
       title: "Captur\u00e9 en lumi\u00e8re",
       subtitle: "L\u2019automne luxembourgeois est unique. Vignobles dor\u00e9s, forteresses de pierre anciennes et routes qui semblent avoir \u00e9t\u00e9 faites pour les voitures classiques.",
-      caption: "Galerie photo compl\u00e8te disponible pour les participants inscrits apr\u00e8s le rallye",
+      caption: "Galerie photo compl\u00e8te disponible apr\u00e8s le rallye pour les participants inscrits",
     },
     register: {
       eyebrow: "Inscription",
