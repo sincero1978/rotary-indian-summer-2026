@@ -11,7 +11,7 @@ export default function Hero() {
   const tr = t[lang].hero;
 
   return (
-    <section className="relative w-full h-screen min-h-[600px] overflow-hidden flex items-center justify-center">
+    <section className="relative w-full h-screen min-h-[600px] overflow-hidden flex items-center justify-start sm:justify-center">
       <video
         className="absolute inset-0 w-full h-full object-cover scale-105"
         src="https://assets.mixkit.co/videos/45312/45312-720.mp4"
@@ -32,7 +32,7 @@ export default function Hero() {
         }}
       />
 
-      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center pt-28 sm:pt-0">
+      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center mt-40 sm:mt-0">
         <div className="mb-8">
           <Image
             src="/logo.png"
