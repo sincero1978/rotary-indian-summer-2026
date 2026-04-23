@@ -96,7 +96,7 @@ const emailStrings = {
     subjectDriver: (driver: string, copilot: string) => `[Rotary Indian Summer Rally] Inscription Confirmée - ${driver} & ${copilot}`,
   },
 
-  lb: {
+  lu: {
     noMeal: "Kee Iessen",
     person: "Persoun",
     newRegistration: "Nei Umeldung",
@@ -150,7 +150,7 @@ const MENUS: Record<string, Record<string, string>> = {
     "2": "Menu 2 — Cannelloni Bolognaise",
     "3": "Menu 3 — Cannelloni Végétarien",
   },
-  lb: {
+  lu: {
     "1": "Menu 1 — Wiener Schnitzel",
     "2": "Menu 2 — Cannelloni Bolognese",
     "3": "Menu 3 — Vegetaresche Cannelloni",
@@ -188,7 +188,7 @@ interface RegistrationPayload {
 
 // ─── Organiser email ──────────────────────────────────────────────────────────
 
-function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr" | "lb"): string {
+function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr" | "lu"): string {
   const s = emailStrings[lang];
   const menus = MENUS[lang];
   const participants = [data.driverName, data.copilotName, ...data.extraNames];
@@ -285,7 +285,7 @@ function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" |
 
 // ─── Driver confirmation email ────────────────────────────────────────────────
 
-function buildDriverHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr" | "lb"): string {
+function buildDriverHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr" | "lu"): string {
   const s = emailStrings[lang];
   const menus = MENUS[lang];
   const participants = [data.driverName, data.copilotName, ...data.extraNames];
@@ -437,7 +437,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const lang: "en" | "fr" | "lb" = body.lang === "en" ? "en" : body.lang === "fr" ? "fr" : "lb";
+    const lang: "en" | "fr" | "lu" = body.lang === "en" ? "en" : body.lang === "fr" ? "fr" : "lu";
     const s = emailStrings[lang];
     const reference = generateReference();
 

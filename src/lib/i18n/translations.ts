@@ -1,4 +1,4 @@
-export type Lang = "lb" | "fr" | "en";
+export type Lang = "lu" | "fr" | "en";
 
 export const t = {
   en: {
@@ -349,7 +349,7 @@ export const t = {
     },
   },
 
-  lb: {
+  lu: {
     nav: {
       about: "\u00dcwwert eis",
       gallery: "Galerie",

@@ -9,16 +9,16 @@ interface LanguageContextValue {
 }
 
 const LanguageContext = createContext<LanguageContextValue>({
-  lang: "lb",
+  lang: "lu",
   setLang: () => {},
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("lb");
+  const [lang, setLangState] = useState<Lang>("lu");
 
   useEffect(() => {
     const saved = localStorage.getItem("rist-lang") as Lang | null;
-    if (saved === "lb" || saved === "fr" || saved === "en") setLangState(saved);
+    if (saved === "lu" || saved === "fr" || saved === "en") setLangState(saved);
   }, []);
 
   const setLang = (l: Lang) => {
