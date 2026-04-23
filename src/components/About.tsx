@@ -61,7 +61,7 @@ export default function About() {
             </div>
           </div>
 
-          <div className="relative h-[480px] lg:h-[560px]">
+          <div className="relative h-[300px] sm:h-[480px] lg:h-[560px]">
             <div className="absolute top-0 right-0 w-[82%] h-[88%] rounded-2xl overflow-hidden shadow-[0_20px_60px_rgba(45,106,79,0.15)]">
               <Image
                 src="/luxembourg-indian-summer.webp"

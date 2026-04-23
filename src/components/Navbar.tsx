@@ -30,19 +30,19 @@ export default function Navbar() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-[background-color,padding,box-shadow] duration-500 ${
         scrolled
-          ? "bg-forest shadow-[0_4px_24px_rgba(45,106,79,0.18)] py-3"
-          : "bg-transparent py-5"
+          ? "bg-forest shadow-[0_4px_24px_rgba(45,106,79,0.18)] py-1.5 sm:py-3"
+          : "bg-transparent py-1.5 sm:py-5"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="#" className="flex items-center group">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 flex items-center justify-between">
+        {/* Logo — smaller on mobile so it doesn't collide with right-side controls */}
+        <Link href="#" className="flex items-center group flex-shrink-0">
           <Image
             src="/rc-bascharage-kordall.webp"
             alt="Rotary Club Bascharage-Kordall"
             width={240}
             height={90}
-            className="h-24 w-auto object-contain mix-blend-screen opacity-95 transition-opacity duration-200 group-hover:opacity-100"
+            className="h-14 sm:h-24 w-auto object-contain mix-blend-screen opacity-95 transition-opacity duration-200 group-hover:opacity-100"
             priority
           />
         </Link>
@@ -59,7 +59,7 @@ export default function Navbar() {
             </Link>
           ))}
 
-          {/* Language switcher */}
+          {/* Language switcher desktop */}
           <div className="flex items-center gap-1 ml-2 border border-white/20 rounded-full px-1 py-0.5">
             {(["lu", "fr", "en"] as const).map((l) => (
               <button
@@ -85,14 +85,14 @@ export default function Navbar() {
         </nav>
 
         {/* Mobile right side */}
-        <div className="md:hidden flex items-center gap-3">
-          {/* Language switcher mobile */}
-          <div className="flex items-center gap-1 border border-white/20 rounded-full px-1 py-0.5">
+        <div className="md:hidden flex items-center gap-2">
+          {/* Language switcher mobile — compact */}
+          <div className="flex items-center border border-white/20 rounded-full overflow-hidden">
             {(["lu", "fr", "en"] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => setLang(l)}
-                className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-[background-color,color] duration-200 focus-visible:outline-none ${
+                className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-[background-color,color] duration-200 focus-visible:outline-none ${
                   lang === l
                     ? "bg-sage text-forest"
                     : "text-white/60 hover:text-white"
@@ -104,7 +104,7 @@ export default function Navbar() {
           </div>
 
           <button
-            className="text-white p-2 rounded-lg hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage transition-colors"
+            className="text-white p-1.5 rounded-lg hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage transition-colors"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Toggle menu"
           >
