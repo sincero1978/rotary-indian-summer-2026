@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { google } from "googleapis";
 
 const MENUS: Record<string, string> = {
   "1": "Menu 1 — Wiener Schnitzel",
@@ -7,8 +7,8 @@ const MENUS: Record<string, string> = {
   "3": "Menu 3 — Vegetarian Cannelloni",
 };
 
-const SENDER = '"Rotary Indian Summer Tour 2026" <rotarybacharagekordall@gmail.com>';
-const ORGANISER_RECIPIENTS = ["Rist2026@hotmail.com", "rotarybacharagekordall@gmail.com"];
+const SENDER = '"Rotary Indian Summer Tour 2026" <rotarybascharagekordall@gmail.com>';
+const ORGANISER_RECIPIENTS = ["Rist2026@hotmail.com", "rotarybascharagekordall@gmail.com"];
 
 const BANK_IBAN = "LU80 0019 4955 0049 5000";
 const BANK_BIC = "BGLLLULL";
@@ -147,7 +147,7 @@ function buildOrganiserHtml(data: RegistrationPayload, ref: string): string {
 function buildDriverHtml(data: RegistrationPayload, ref: string): string {
   const participants = [data.driverName, data.copilotName, ...data.extraNames];
   const extraPersonCost = data.extraParticipants * 20;
-  const paymentRef = `Rotary Indian Summer ${data.email}`;
+  const paymentRef = `Rotary Indian Summer ${ref}`;
 
   const mealRows = data.mealChoices
     .map(
@@ -282,7 +282,7 @@ function buildDriverHtml(data: RegistrationPayload, ref: string): string {
 
         <tr><td style="background:#1a2e24;padding:20px;text-align:center">
           <p style="color:#52B788;margin:0 0 4px;font-size:12px">Rotary Club Bascharage-Kordall — Service Above Self</p>
-          <p style="color:#52B788;margin:0;font-size:11px;opacity:0.7">rotarybacharagekordall@gmail.com</p>
+          <p style="color:#52B788;margin:0;font-size:11px;opacity:0.7">rotarybascharagekordall@gmail.com</p>
         </td></tr>
 
       </table>
@@ -315,31 +315,55 @@ export async function POST(req: NextRequest) {
 
     const reference = generateReference();
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp-relay.brevo.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.BREVO_SMTP_USER,
-        pass: process.env.BREVO_SMTP_PASS,
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      "https://developers.google.com/oauthplayground"
+    );
+    oauth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
+    const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+    const encodeSubject = (subject: string) =>
+      `=?UTF-8?B?${Buffer.from(subject).toString("base64")}?=`;
+
+    const buildRaw = (to: string | string[], subject: string, html: string, replyTo?: string) => {
+      const toHeader = Array.isArray(to) ? to.join(", ") : to;
+      const headers = [
+        `From: ${SENDER}`,
+        `To: ${toHeader}`,
+        ...(replyTo ? [`Reply-To: ${replyTo}`] : []),
+        `Subject: ${encodeSubject(subject)}`,
+        "MIME-Version: 1.0",
+        "Content-Type: text/html; charset=utf-8",
+        "",
+        html,
+      ].join("\n");
+      return Buffer.from(headers).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    };
+
+    // Email 1: full registration details to organisers
+    await gmail.users.messages.send({
+      userId: "me",
+      requestBody: {
+        raw: buildRaw(
+          ORGANISER_RECIPIENTS,
+          `[Rotary Indian Summer Rally] Registration ${reference} - ${body.driverName} & ${body.copilotName}`,
+          buildOrganiserHtml(body, reference),
+          body.email
+        ),
       },
     });
 
-    // Email 1: full registration details to organisers
-    await transporter.sendMail({
-      from: SENDER,
-      to: ORGANISER_RECIPIENTS,
-      replyTo: body.email,
-      subject: `[RIST 2026] Registration ${reference} — ${body.driverName} & ${body.copilotName}`,
-      html: buildOrganiserHtml(body, reference),
-    });
-
     // Email 2: confirmation + payment instructions to driver
-    await transporter.sendMail({
-      from: SENDER,
-      to: body.email,
-      subject: `Your registration for the Rotary Indian Summer Tour 2026 — ${reference}`,
-      html: buildDriverHtml(body, reference),
+    await gmail.users.messages.send({
+      userId: "me",
+      requestBody: {
+        raw: buildRaw(
+          body.email,
+          `[Rotary Indian Summer Rally] Registration Confirmed - ${body.driverName} & ${body.copilotName}`,
+          buildDriverHtml(body, reference)
+        ),
+      },
     });
 
     return NextResponse.json({ reference });

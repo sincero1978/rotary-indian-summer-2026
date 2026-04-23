@@ -86,15 +86,7 @@ export default function Footer() {
                   rist2026@hotmail.com
                 </a>
               </li>
-              <li>
-                <a
-                  href="tel:+352691141151"
-                  className="hover:text-sage transition-colors duration-200"
-                >
-                  +352 691 141 151
-                </a>
-              </li>
-              <li className="leading-relaxed">
+<li className="leading-relaxed">
                 Rotary Club Bascharage-Kordall<br />
                 Restaurant Threeland<br />
                 50 Rue Pierre Hamer<br />

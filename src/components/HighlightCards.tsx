@@ -1,4 +1,4 @@
-import { MapPin, Clock, Trophy, Users, Camera, Utensils } from "lucide-react";
+import { MapPin, Clock, Trophy, Users, Camera, HeartHandshake } from "lucide-react";
 
 const highlights = [
   {
@@ -26,7 +26,7 @@ const highlights = [
     accent: "Giving back together",
   },
   {
-    icon: Utensils,
+    icon: HeartHandshake,
     title: "Supporting a Good Cause",
     body: "All net proceeds from the rally go directly towards supporting charitable causes locally and internationally, in true Rotary spirit.",
     accent: "Service Above Self",
