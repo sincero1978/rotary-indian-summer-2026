@@ -33,7 +33,7 @@ export default function Hero() {
       />
 
       {/* Hero content */}
-      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center">
+      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center pt-28 sm:pt-0">
         {/* Rotary logo */}
         <div className="mb-8">
           <Image

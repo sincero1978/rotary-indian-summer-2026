@@ -80,24 +80,25 @@ export default function Footer() {
             <ul className="space-y-3 text-white/50 text-sm">
               <li>
                 <a
-                  href="mailto:rally@rotary-luxembourg.lu"
+                  href="mailto:rist2026@hotmail.com"
                   className="hover:text-sage transition-colors duration-200 focus-visible:outline-none focus-visible:text-sage"
                 >
-                  rally@rotary-luxembourg.lu
+                  rist2026@hotmail.com
                 </a>
               </li>
               <li>
                 <a
-                  href="tel:+352621000000"
+                  href="tel:+352691141151"
                   className="hover:text-sage transition-colors duration-200"
                 >
-                  +352 621 000 000
+                  +352 691 141 151
                 </a>
               </li>
               <li className="leading-relaxed">
                 Rotary Club Bascharage-Kordall<br />
-                Cercle Munster<br />
-                Luxembourg-City, L-2160
+                Restaurant Threeland<br />
+                50 Rue Pierre Hamer<br />
+                4737 Pétange
               </li>
             </ul>
           </div>

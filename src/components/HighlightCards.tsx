@@ -27,9 +27,9 @@ const highlights = [
   },
   {
     icon: Utensils,
-    title: "Fine Dining & Hospitality",
-    body: "Each evening features gala dinners at iconic Luxembourg venues, with regional wines and local gastronomy.",
-    accent: "World-class hospitality",
+    title: "Supporting a Good Cause",
+    body: "All net proceeds from the rally go directly towards supporting charitable causes locally and internationally, in true Rotary spirit.",
+    accent: "Service Above Self",
   },
   {
     icon: Camera,
