@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 
-const MENUS: Record<string, string> = {
-  "1": "Menu 1 — Wiener Schnitzel",
-  "2": "Menu 2 — Cannelloni Bolognese",
-  "3": "Menu 3 — Vegetarian Cannelloni",
-};
-
 const SENDER = '"Rotary Indian Summer Tour 2026" <rotarybascharagekordall@gmail.com>';
 const ORGANISER_RECIPIENTS = ["Rist2026@hotmail.com", "rotarybascharagekordall@gmail.com"];
 
@@ -14,6 +8,107 @@ const BANK_IBAN = "LU80 0019 4955 0049 5000";
 const BANK_BIC = "BGLLLULL";
 const BANK_NAME = "BGL BNP Paribas";
 const ACCOUNT_NAME = "Rotary Club Bascharage-Kordall";
+
+// ─── i18n strings for emails ──────────────────────────────────────────────────
+
+const emailStrings = {
+  en: {
+    noMeal: "No meal",
+    person: "Person",
+    newRegistration: "New Registration",
+    teamInfo: "Team Information",
+    driver: "Driver",
+    copilot: "Co-pilot",
+    email: "Email",
+    phone: "Phone",
+    vehicle: "Vehicle",
+    extraParticipants: "Extra participant(s)",
+    mealSelections: "Meal Selections",
+    participant: "Participant",
+    selection: "Selection",
+    priceBreakdown: "Price Breakdown",
+    teamEntry: "Team entry (2 persons)",
+    extraLine: (n: number, cost: number) => `Extra participant(s) (${n} × €20): <strong>€${cost}</strong>`,
+    mealsLine: (n: number, cost: number) => `Meals (${n} × €35): <strong>€${cost}</strong>`,
+    total: "Total",
+    totalDue: "Total due",
+    eventDetails: "Event Details",
+    date: "Sunday, 6 September 2026",
+    startBriefing: "Start: 10h00 — Briefing: 10h45",
+    location: "Mess-Café / Reckange-sur-Mess",
+    routebook: "Route book with arrows provided on the day (no average speed to maintain)",
+    motto: "Service Above Self",
+    // driver email
+    registrationConfirmed: "Registration Confirmed",
+    yourRegistration: "Your Registration",
+    priceSummary: "Price Summary",
+    greeting: (name: string) => `Dear ${name},`,
+    intro: `Thank you for registering for the <strong>9th Rotary Indian Summer Tour 2026</strong>. We are delighted to welcome you and your team to this year's charity rally. Your registration has been received and is summarised below.`,
+    paymentInstructions: "Payment Instructions",
+    paymentIntro: (total: number) => `Please transfer the amount of <strong>€${total}</strong> by bank transfer to the following account:`,
+    accountName: "Account Name",
+    bank: "Bank",
+    paymentCommLabel: "Payment Communication (mandatory)",
+    paymentWarning: "⚠️ Please include the exact communication above in your bank transfer so we can identify your payment. Your place will be confirmed once payment is received. SEPA transfers typically process within 1–3 banking days.",
+    closing: "If you have any questions, please don't hesitate to contact us by replying to this email.<br>We look forward to seeing you on the road!",
+    subjectOrganiser: (ref: string, driver: string, copilot: string) => `[Rotary Indian Summer Rally] Registration ${ref} - ${driver} & ${copilot}`,
+    subjectDriver: (driver: string, copilot: string) => `[Rotary Indian Summer Rally] Registration Confirmed - ${driver} & ${copilot}`,
+  },
+  fr: {
+    noMeal: "Pas de repas",
+    person: "Personne",
+    newRegistration: "Nouvelle Inscription",
+    teamInfo: "Informations de l'équipe",
+    driver: "Pilote",
+    copilot: "Copilote",
+    email: "E-mail",
+    phone: "Téléphone",
+    vehicle: "Véhicule",
+    extraParticipants: "Participant(s) supplémentaire(s)",
+    mealSelections: "Choix des repas",
+    participant: "Participant",
+    selection: "Sélection",
+    priceBreakdown: "Détail des prix",
+    teamEntry: "Équipe (2 personnes)",
+    extraLine: (n: number, cost: number) => `Participant(s) supplémentaire(s) (${n} × €20) : <strong>€${cost}</strong>`,
+    mealsLine: (n: number, cost: number) => `Repas (${n} × €35) : <strong>€${cost}</strong>`,
+    total: "Total",
+    totalDue: "Total à payer",
+    eventDetails: "Détails de l'événement",
+    date: "Dimanche, 6 septembre 2026",
+    startBriefing: "Départ : 10h00 — Briefing : 10h45",
+    location: "Mess-Café / Reckange-sur-Mess",
+    routebook: "Road-book avec flèches fourni le jour même (pas de vitesse moyenne à maintenir)",
+    motto: "Au service des autres",
+    registrationConfirmed: "Inscription Confirmée",
+    yourRegistration: "Votre Inscription",
+    priceSummary: "Récapitulatif des prix",
+    greeting: (name: string) => `Cher(e) ${name},`,
+    intro: `Merci de vous être inscrit(e) au <strong>9e Rotary Indian Summer Tour 2026</strong>. Nous sommes ravis de vous accueillir, vous et votre équipe, à ce rallye caritative. Votre inscription a bien été reçue et est résumée ci-dessous.`,
+    paymentInstructions: "Instructions de paiement",
+    paymentIntro: (total: number) => `Veuillez transférer le montant de <strong>€${total}</strong> par virement bancaire sur le compte suivant :`,
+    accountName: "Nom du compte",
+    bank: "Banque",
+    paymentCommLabel: "Communication de paiement (obligatoire)",
+    paymentWarning: "⚠️ Veuillez inclure la communication exacte ci-dessus dans votre virement bancaire afin que nous puissions identifier votre paiement. Votre place sera confirmée dès réception du paiement. Les virements SEPA sont généralement traités en 1 à 3 jours ouvrables.",
+    closing: "Si vous avez des questions, n'hésitez pas à nous contacter en répondant à cet e-mail.<br>Nous avons hâte de vous retrouver sur la route !",
+    subjectOrganiser: (ref: string, driver: string, copilot: string) => `[Rotary Indian Summer Rally] Inscription ${ref} - ${driver} & ${copilot}`,
+    subjectDriver: (driver: string, copilot: string) => `[Rotary Indian Summer Rally] Inscription Confirmée - ${driver} & ${copilot}`,
+  },
+};
+
+const MENUS: Record<string, Record<string, string>> = {
+  en: {
+    "1": "Menu 1 — Wiener Schnitzel",
+    "2": "Menu 2 — Cannelloni Bolognese",
+    "3": "Menu 3 — Vegetarian Cannelloni",
+  },
+  fr: {
+    "1": "Menu 1 — Wiener Schnitzel",
+    "2": "Menu 2 — Cannelloni Bolognaise",
+    "3": "Menu 3 — Cannelloni Végétarien",
+  },
+};
 
 function generateReference(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -41,27 +136,26 @@ interface RegistrationPayload {
   mealChoices: MealChoice[];
   mealCost: number;
   total: number;
+  lang?: string;
 }
 
-// ─── Organiser email (full registration details) ──────────────────────────────
+// ─── Organiser email ──────────────────────────────────────────────────────────
 
-function buildOrganiserHtml(data: RegistrationPayload, ref: string): string {
+function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr"): string {
+  const s = emailStrings[lang];
+  const menus = MENUS[lang];
   const participants = [data.driverName, data.copilotName, ...data.extraNames];
   const extraPersonCost = data.extraParticipants * 20;
 
-  const mealRows = data.mealChoices
-    .map(
-      (m, i) => `
-      <tr style="background:${i % 2 === 0 ? "#f0f7f4" : "white"}">
-        <td style="padding:8px 12px;color:#555">${participants[i] ?? `Person ${i + 1}`}</td>
-        <td style="padding:8px 12px">${m.include ? MENUS[m.menu] ?? m.menu : "No meal"}</td>
-      </tr>`
-    )
-    .join("");
+  const mealRows = data.mealChoices.map((m, i) => `
+    <tr style="background:${i % 2 === 0 ? "#f0f7f4" : "white"}">
+      <td style="padding:8px 12px;color:#555">${participants[i] ?? `${s.person} ${i + 1}`}</td>
+      <td style="padding:8px 12px">${m.include ? menus[m.menu] ?? m.menu : s.noMeal}</td>
+    </tr>`).join("");
 
   return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>RIST 2026 Registration</title></head>
+<html lang="${lang}">
+<head><meta charset="utf-8"><title>RIST 2026</title></head>
 <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f4f4">
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center" style="padding:32px 16px">
@@ -69,7 +163,7 @@ function buildOrganiserHtml(data: RegistrationPayload, ref: string): string {
 
         <tr><td style="background:#2D6A4F;padding:32px;text-align:center">
           <h1 style="color:white;margin:0 0 6px;font-size:22px">Rotary Indian Summer Tour 2026</h1>
-          <p style="color:#52B788;margin:0;font-size:14px;letter-spacing:0.1em;text-transform:uppercase">New Registration</p>
+          <p style="color:#52B788;margin:0;font-size:14px;letter-spacing:0.1em;text-transform:uppercase">${s.newRegistration}</p>
         </td></tr>
 
         <tr><td style="background:#52B788;padding:12px 32px;text-align:center">
@@ -78,61 +172,61 @@ function buildOrganiserHtml(data: RegistrationPayload, ref: string): string {
 
         <tr><td style="padding:32px">
 
-          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">Team Information</h3>
+          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">${s.teamInfo}</h3>
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px">
             <tr style="background:#f0f7f4">
-              <td style="padding:8px 12px;color:#555;width:40%">Driver</td>
+              <td style="padding:8px 12px;color:#555;width:40%">${s.driver}</td>
               <td style="padding:8px 12px;font-weight:bold">${data.driverName}</td>
             </tr>
             <tr>
-              <td style="padding:8px 12px;color:#555">Co-pilot</td>
+              <td style="padding:8px 12px;color:#555">${s.copilot}</td>
               <td style="padding:8px 12px;font-weight:bold">${data.copilotName}</td>
             </tr>
             <tr style="background:#f0f7f4">
-              <td style="padding:8px 12px;color:#555">Email</td>
+              <td style="padding:8px 12px;color:#555">${s.email}</td>
               <td style="padding:8px 12px">${data.email}</td>
             </tr>
             <tr>
-              <td style="padding:8px 12px;color:#555">Phone</td>
+              <td style="padding:8px 12px;color:#555">${s.phone}</td>
               <td style="padding:8px 12px">${data.phone}</td>
             </tr>
             <tr style="background:#f0f7f4">
-              <td style="padding:8px 12px;color:#555">Vehicle</td>
+              <td style="padding:8px 12px;color:#555">${s.vehicle}</td>
               <td style="padding:8px 12px">${data.carMake} ${data.carModel} — ${data.carYear}</td>
             </tr>
             ${data.extraParticipants > 0 ? `<tr>
-              <td style="padding:8px 12px;color:#555">Extra participant(s)</td>
+              <td style="padding:8px 12px;color:#555">${s.extraParticipants}</td>
               <td style="padding:8px 12px">${data.extraNames.join(", ")}</td>
             </tr>` : ""}
           </table>
 
-          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">Meal Selections</h3>
+          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">${s.mealSelections}</h3>
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px">
             <tr style="background:#2D6A4F">
-              <th style="padding:8px 12px;text-align:left;color:white;font-size:13px">Participant</th>
-              <th style="padding:8px 12px;text-align:left;color:white;font-size:13px">Selection</th>
+              <th style="padding:8px 12px;text-align:left;color:white;font-size:13px">${s.participant}</th>
+              <th style="padding:8px 12px;text-align:left;color:white;font-size:13px">${s.selection}</th>
             </tr>
             ${mealRows}
           </table>
 
           <div style="background:#f0f7f4;border-left:4px solid #2D6A4F;padding:20px;margin-bottom:24px;border-radius:4px">
-            <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px">Price Breakdown</h3>
-            <p style="margin:4px 0;color:#555;font-size:14px">Team entry (2 persons): <strong>€125</strong></p>
-            ${data.extraParticipants > 0 ? `<p style="margin:4px 0;color:#555;font-size:14px">Extra participant(s) (${data.extraParticipants} × €20): <strong>€${extraPersonCost}</strong></p>` : ""}
-            ${data.mealCost > 0 ? `<p style="margin:4px 0;color:#555;font-size:14px">Meals (${data.mealChoices.filter((m) => m.include).length} × €35): <strong>€${data.mealCost}</strong></p>` : ""}
-            <p style="margin:16px 0 0;font-size:20px;font-weight:bold;color:#2D6A4F">Total: €${data.total}</p>
+            <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px">${s.priceBreakdown}</h3>
+            <p style="margin:4px 0;color:#555;font-size:14px">${s.teamEntry}: <strong>€125</strong></p>
+            ${data.extraParticipants > 0 ? `<p style="margin:4px 0;color:#555;font-size:14px">${s.extraLine(data.extraParticipants, extraPersonCost)}</p>` : ""}
+            ${data.mealCost > 0 ? `<p style="margin:4px 0;color:#555;font-size:14px">${s.mealsLine(data.mealChoices.filter((m) => m.include).length, data.mealCost)}</p>` : ""}
+            <p style="margin:16px 0 0;font-size:20px;font-weight:bold;color:#2D6A4F">${s.total}: €${data.total}</p>
           </div>
 
           <div style="border:1px solid #e2ede8;border-radius:6px;padding:16px;font-size:13px;color:#555;line-height:1.8">
-            <strong style="color:#2D6A4F">📅</strong> Sunday, 6 September 2026<br>
-            <strong style="color:#2D6A4F">⏰</strong> Start: 10h00 — Briefing: 10h45<br>
-            <strong style="color:#2D6A4F">📍</strong> Mess-Café / Reckange-sur-Mess
+            <strong style="color:#2D6A4F">📅</strong> ${s.date}<br>
+            <strong style="color:#2D6A4F">⏰</strong> ${s.startBriefing}<br>
+            <strong style="color:#2D6A4F">📍</strong> ${s.location}
           </div>
 
         </td></tr>
 
         <tr><td style="background:#1a2e24;padding:20px;text-align:center">
-          <p style="color:#52B788;margin:0;font-size:12px">Rotary Club Bascharage-Kordall — Service Above Self</p>
+          <p style="color:#52B788;margin:0;font-size:12px">Rotary Club Bascharage-Kordall — ${s.motto}</p>
         </td></tr>
 
       </table>
@@ -144,24 +238,22 @@ function buildOrganiserHtml(data: RegistrationPayload, ref: string): string {
 
 // ─── Driver confirmation email ────────────────────────────────────────────────
 
-function buildDriverHtml(data: RegistrationPayload, ref: string): string {
+function buildDriverHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr"): string {
+  const s = emailStrings[lang];
+  const menus = MENUS[lang];
   const participants = [data.driverName, data.copilotName, ...data.extraNames];
   const extraPersonCost = data.extraParticipants * 20;
   const paymentRef = `Rotary Indian Summer ${ref}`;
 
-  const mealRows = data.mealChoices
-    .map(
-      (m, i) => `
-      <tr style="background:${i % 2 === 0 ? "#f0f7f4" : "white"}">
-        <td style="padding:8px 12px;color:#555">${participants[i] ?? `Person ${i + 1}`}</td>
-        <td style="padding:8px 12px">${m.include ? MENUS[m.menu] ?? m.menu : "No meal"}</td>
-      </tr>`
-    )
-    .join("");
+  const mealRows = data.mealChoices.map((m, i) => `
+    <tr style="background:${i % 2 === 0 ? "#f0f7f4" : "white"}">
+      <td style="padding:8px 12px;color:#555">${participants[i] ?? `${s.person} ${i + 1}`}</td>
+      <td style="padding:8px 12px">${m.include ? menus[m.menu] ?? m.menu : s.noMeal}</td>
+    </tr>`).join("");
 
   return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>RIST 2026 — Registration Confirmed</title></head>
+<html lang="${lang}">
+<head><meta charset="utf-8"><title>RIST 2026</title></head>
 <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f4f4">
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center" style="padding:32px 16px">
@@ -169,7 +261,7 @@ function buildDriverHtml(data: RegistrationPayload, ref: string): string {
 
         <tr><td style="background:#2D6A4F;padding:40px 32px;text-align:center">
           <h1 style="color:white;margin:0 0 8px;font-size:24px">Rotary Indian Summer Tour 2026</h1>
-          <p style="color:#52B788;margin:0;font-size:14px;letter-spacing:0.1em;text-transform:uppercase">Registration Confirmed</p>
+          <p style="color:#52B788;margin:0;font-size:14px;letter-spacing:0.1em;text-transform:uppercase">${s.registrationConfirmed}</p>
         </td></tr>
 
         <tr><td style="background:#52B788;padding:12px 32px;text-align:center">
@@ -179,70 +271,65 @@ function buildDriverHtml(data: RegistrationPayload, ref: string): string {
         <tr><td style="padding:32px">
 
           <p style="color:#333;font-size:15px;line-height:1.7;margin:0 0 24px">
-            Dear ${data.driverName},<br><br>
-            Thank you for registering for the <strong>9th Rotary Indian Summer Tour 2026</strong>.
-            We are delighted to welcome you and your team to this year's charity rally.
-            Your registration has been received and is summarised below.
+            ${s.greeting(data.driverName)}<br><br>
+            ${s.intro}
           </p>
 
-          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">Your Registration</h3>
+          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">${s.yourRegistration}</h3>
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px">
             <tr style="background:#f0f7f4">
-              <td style="padding:8px 12px;color:#555;width:40%">Driver</td>
+              <td style="padding:8px 12px;color:#555;width:40%">${s.driver}</td>
               <td style="padding:8px 12px;font-weight:bold">${data.driverName}</td>
             </tr>
             <tr>
-              <td style="padding:8px 12px;color:#555">Co-pilot</td>
+              <td style="padding:8px 12px;color:#555">${s.copilot}</td>
               <td style="padding:8px 12px;font-weight:bold">${data.copilotName}</td>
             </tr>
             <tr style="background:#f0f7f4">
-              <td style="padding:8px 12px;color:#555">Email</td>
+              <td style="padding:8px 12px;color:#555">${s.email}</td>
               <td style="padding:8px 12px">${data.email}</td>
             </tr>
             <tr>
-              <td style="padding:8px 12px;color:#555">Phone</td>
+              <td style="padding:8px 12px;color:#555">${s.phone}</td>
               <td style="padding:8px 12px">${data.phone}</td>
             </tr>
             <tr style="background:#f0f7f4">
-              <td style="padding:8px 12px;color:#555">Vehicle</td>
+              <td style="padding:8px 12px;color:#555">${s.vehicle}</td>
               <td style="padding:8px 12px">${data.carMake} ${data.carModel} — ${data.carYear}</td>
             </tr>
             ${data.extraParticipants > 0 ? `<tr>
-              <td style="padding:8px 12px;color:#555">Extra participant(s)</td>
+              <td style="padding:8px 12px;color:#555">${s.extraParticipants}</td>
               <td style="padding:8px 12px">${data.extraNames.join(", ")}</td>
             </tr>` : ""}
           </table>
 
-          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">Meal Selections</h3>
+          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">${s.mealSelections}</h3>
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px">
             <tr style="background:#2D6A4F">
-              <th style="padding:8px 12px;text-align:left;color:white;font-size:13px">Participant</th>
-              <th style="padding:8px 12px;text-align:left;color:white;font-size:13px">Selection</th>
+              <th style="padding:8px 12px;text-align:left;color:white;font-size:13px">${s.participant}</th>
+              <th style="padding:8px 12px;text-align:left;color:white;font-size:13px">${s.selection}</th>
             </tr>
             ${mealRows}
           </table>
 
           <div style="background:#f0f7f4;border-left:4px solid #2D6A4F;padding:20px;margin-bottom:24px;border-radius:4px">
-            <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px">Price Summary</h3>
-            <p style="margin:4px 0;color:#555;font-size:14px">Team entry (2 persons): <strong>€125</strong></p>
-            ${data.extraParticipants > 0 ? `<p style="margin:4px 0;color:#555;font-size:14px">Extra participant(s) (${data.extraParticipants} × €20): <strong>€${extraPersonCost}</strong></p>` : ""}
-            ${data.mealCost > 0 ? `<p style="margin:4px 0;color:#555;font-size:14px">Meals (${data.mealChoices.filter((m) => m.include).length} × €35): <strong>€${data.mealCost}</strong></p>` : ""}
-            <p style="margin:16px 0 0;font-size:20px;font-weight:bold;color:#2D6A4F">Total due: €${data.total}</p>
+            <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px">${s.priceSummary}</h3>
+            <p style="margin:4px 0;color:#555;font-size:14px">${s.teamEntry}: <strong>€125</strong></p>
+            ${data.extraParticipants > 0 ? `<p style="margin:4px 0;color:#555;font-size:14px">${s.extraLine(data.extraParticipants, extraPersonCost)}</p>` : ""}
+            ${data.mealCost > 0 ? `<p style="margin:4px 0;color:#555;font-size:14px">${s.mealsLine(data.mealChoices.filter((m) => m.include).length, data.mealCost)}</p>` : ""}
+            <p style="margin:16px 0 0;font-size:20px;font-weight:bold;color:#2D6A4F">${s.totalDue}: €${data.total}</p>
           </div>
 
-          <!-- Payment instructions -->
           <div style="background:#e8f4ee;border:1px solid #52B788;border-radius:6px;padding:20px;margin-bottom:24px">
-            <h3 style="color:#2D6A4F;margin:0 0 16px;font-size:15px">Payment Instructions</h3>
-            <p style="margin:0 0 12px;color:#555;font-size:14px;line-height:1.6">
-              Please transfer the amount of <strong>€${data.total}</strong> by bank transfer to the following account:
-            </p>
+            <h3 style="color:#2D6A4F;margin:0 0 16px;font-size:15px">${s.paymentInstructions}</h3>
+            <p style="margin:0 0 12px;color:#555;font-size:14px;line-height:1.6">${s.paymentIntro(data.total)}</p>
             <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px">
               <tr style="background:#d4ecdf">
-                <td style="padding:8px 12px;color:#555;width:40%;font-size:14px">Account Name</td>
+                <td style="padding:8px 12px;color:#555;width:40%;font-size:14px">${s.accountName}</td>
                 <td style="padding:8px 12px;font-weight:bold;font-size:14px">${ACCOUNT_NAME}</td>
               </tr>
               <tr style="background:white">
-                <td style="padding:8px 12px;color:#555;font-size:14px">Bank</td>
+                <td style="padding:8px 12px;color:#555;font-size:14px">${s.bank}</td>
                 <td style="padding:8px 12px;font-weight:bold;font-size:14px">${BANK_NAME}</td>
               </tr>
               <tr style="background:#d4ecdf">
@@ -255,33 +342,26 @@ function buildDriverHtml(data: RegistrationPayload, ref: string): string {
               </tr>
             </table>
             <div style="background:#2D6A4F;border-radius:4px;padding:14px 16px">
-              <p style="margin:0 0 4px;color:#52B788;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;font-weight:bold">Payment Communication (mandatory)</p>
+              <p style="margin:0 0 4px;color:#52B788;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;font-weight:bold">${s.paymentCommLabel}</p>
               <p style="margin:0;color:white;font-size:15px;font-weight:bold;font-family:monospace">${paymentRef}</p>
             </div>
-            <p style="margin:12px 0 0;color:#555;font-size:13px;line-height:1.6">
-              ⚠️ Please include the exact communication above in your bank transfer so we can identify your payment.
-              Your place will be confirmed once payment is received. SEPA transfers typically process within 1–3 banking days.
-            </p>
+            <p style="margin:12px 0 0;color:#555;font-size:13px;line-height:1.6">${s.paymentWarning}</p>
           </div>
 
-          <!-- Event details -->
-          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">Event Details</h3>
+          <h3 style="color:#2D6A4F;margin:0 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em">${s.eventDetails}</h3>
           <div style="border:1px solid #e2ede8;border-radius:6px;padding:16px;font-size:14px;color:#555;line-height:2">
-            <strong style="color:#2D6A4F">📅</strong> Sunday, 6 September 2026<br>
-            <strong style="color:#2D6A4F">⏰</strong> Start: 10h00 — Briefing: 10h45<br>
-            <strong style="color:#2D6A4F">📍</strong> Mess-Café / Reckange-sur-Mess<br>
-            <strong style="color:#2D6A4F">🗺</strong> Route book with arrows provided on the day (no average speed to maintain)
+            <strong style="color:#2D6A4F">📅</strong> ${s.date}<br>
+            <strong style="color:#2D6A4F">⏰</strong> ${s.startBriefing}<br>
+            <strong style="color:#2D6A4F">📍</strong> ${s.location}<br>
+            <strong style="color:#2D6A4F">🗺</strong> ${s.routebook}
           </div>
 
-          <p style="margin:24px 0 0;color:#888;font-size:13px;line-height:1.7">
-            If you have any questions, please don't hesitate to contact us by replying to this email.<br>
-            We look forward to seeing you on the road!
-          </p>
+          <p style="margin:24px 0 0;color:#888;font-size:13px;line-height:1.7">${s.closing}</p>
 
         </td></tr>
 
         <tr><td style="background:#1a2e24;padding:20px;text-align:center">
-          <p style="color:#52B788;margin:0 0 4px;font-size:12px">Rotary Club Bascharage-Kordall — Service Above Self</p>
+          <p style="color:#52B788;margin:0 0 4px;font-size:12px">Rotary Club Bascharage-Kordall — ${s.motto}</p>
           <p style="color:#52B788;margin:0;font-size:11px;opacity:0.7">rotarybascharagekordall@gmail.com</p>
         </td></tr>
 
@@ -307,12 +387,11 @@ export async function POST(req: NextRequest) {
       !body.carModel?.trim() ||
       !body.carYear?.trim()
     ) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    const lang: "en" | "fr" = body.lang === "en" ? "en" : "fr";
+    const s = emailStrings[lang];
     const reference = generateReference();
 
     const oauth2Client = new google.auth.OAuth2(
@@ -341,27 +420,27 @@ export async function POST(req: NextRequest) {
       return Buffer.from(headers).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     };
 
-    // Email 1: full registration details to organisers
+    // Email 1: organiser copy (always in the form language)
     await gmail.users.messages.send({
       userId: "me",
       requestBody: {
         raw: buildRaw(
           ORGANISER_RECIPIENTS,
-          `[Rotary Indian Summer Rally] Registration ${reference} - ${body.driverName} & ${body.copilotName}`,
-          buildOrganiserHtml(body, reference),
+          s.subjectOrganiser(reference, body.driverName, body.copilotName),
+          buildOrganiserHtml(body, reference, lang),
           body.email
         ),
       },
     });
 
-    // Email 2: confirmation + payment instructions to driver
+    // Email 2: driver confirmation in the same language
     await gmail.users.messages.send({
       userId: "me",
       requestBody: {
         raw: buildRaw(
           body.email,
-          `[Rotary Indian Summer Rally] Registration Confirmed - ${body.driverName} & ${body.copilotName}`,
-          buildDriverHtml(body, reference)
+          s.subjectDriver(body.driverName, body.copilotName),
+          buildDriverHtml(body, reference, lang)
         ),
       },
     });
@@ -370,9 +449,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Registration error:", message);
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -202,6 +202,7 @@ export default function RegisterCTA() {
           mealChoices: syncedMeals,
           mealCost,
           total,
+          lang,
         }),
       });
       const data = await res.json();
