@@ -63,12 +63,12 @@ export const t = {
         },
         {
           title: "Rotary Fellowship",
-          body: "Organised by Rotary Club Bascharage-Kordall, with all net proceeds supporting local and international charitable projects.",
+          body: "Organised by Rotary Club Bascharage-Kordall, with all net proceeds supporting charitable projects.",
           accent: "Giving back together",
         },
         {
           title: "Supporting a Good Cause",
-          body: "All net proceeds from the rally go directly towards supporting charitable causes locally and internationally, in true Rotary spirit.",
+          body: "All net proceeds from the rally go directly towards supporting charitable causes, in true Rotary spirit.",
           accent: "Service Above Self",
         },
         {
@@ -156,7 +156,7 @@ export const t = {
     footer: {
       nav: "Navigation",
       contact: "Contact",
-      tagline: "An annual classic car rally through Luxembourg\u2019s golden autumn landscapes, organised by Rotary Club Bascharage-Kordall in support of local and international charitable causes.",
+      tagline: "An annual classic car rally through Luxembourg\u2019s golden autumn landscapes, organised by Rotary Club Bascharage-Kordall in support of charitable causes.",
       motto: "Service Above Self",
       privacy: "Privacy Policy",
       terms: "Terms & Conditions",
@@ -237,12 +237,12 @@ export const t = {
         },
         {
           title: "Fraternit\u00e9 Rotary",
-          body: "Organis\u00e9 par le Rotary Club Bascharage-Kordall, tous les b\u00e9n\u00e9fices nets soutiendront des projets caritatifs locaux et internationaux.",
+          body: "Organis\u00e9 par le Rotary Club Bascharage-Kordall, tous les b\u00e9n\u00e9fices nets soutiendront des projets caritatifs.",
           accent: "Ensemble pour le bien",
         },
         {
           title: "Soutenir une bonne cause",
-          body: "Tous les b\u00e9n\u00e9fices nets du rallye sont directement consacr\u00e9s \u00e0 des causes caritatives locales et internationales, dans le vrai esprit Rotary.",
+          body: "Tous les b\u00e9n\u00e9fices nets du rallye sont directement consacr\u00e9s \u00e0 des causes caritatives, dans le vrai esprit Rotary.",
           accent: "Au service des autres",
         },
         {
@@ -330,7 +330,7 @@ export const t = {
     footer: {
       nav: "Navigation",
       contact: "Contact",
-      tagline: "Un rallye annuel de voitures classiques et de sport \u00e0 travers les paysages dor\u00e9s de l\u2019automne luxembourgeois, organis\u00e9 par le Rotary Club Bascharage-Kordall au profit de causes caritatives locales et internationales.",
+      tagline: "Un rallye annuel de voitures classiques et de sport \u00e0 travers les paysages dor\u00e9s de l\u2019automne luxembourgeois, organis\u00e9 par le Rotary Club Bascharage-Kordall au profit de causes caritatives.",
       motto: "Au service des autres",
       privacy: "Politique de confidentialit\u00e9",
       terms: "Conditions g\u00e9n\u00e9rales",
@@ -411,12 +411,12 @@ export const t = {
         },
         {
           title: "Rotary Fr\u00ebndschaft",
-          body: "Organiséiert vum Rotary Club Bascharage-Kordall, wou all Nettogew\u00ebnn lokaler an internationale Wohlt\u00e4tegkeetsprojeten ënnerstëtzen.",
+          body: "Organiséiert vum Rotary Club Bascharage-Kordall, wou all Nettogew\u00ebnn Wohlt\u00e4tegkeetsprojeten ënnerstëtzen.",
           accent: "Zesummen h\u00ebllefe",
         },
         {
           title: "Eng gutt Saach ënnerstëtzen",
-          body: "All Nettogew\u00ebnn vum Rallye g\u00ebn direkt u wohlt\u00e4teg Zwecker lokal an international, am w\u00e4re Rotary-Geescht.",
+          body: "All Nettogew\u00ebnn vum Rallye g\u00ebn direkt u wohlt\u00e4teg Zwecker, am w\u00e4re Rotary-Geescht.",
           accent: "D\u00e9ngscht \u00fcwwert sech selwer",
         },
         {
@@ -504,7 +504,7 @@ export const t = {
     footer: {
       nav: "Navigatioun",
       contact: "Kontakt",
-      tagline: "E j\u00e4hrleche Klassikerwagonsrallye duerch d\u00e9i g\u00eblle Herbschtlandschaften vu L\u00ebtzeb\u00ebreg, organiséiert vum Rotary Club Bascharage-Kordall zum Virdeel vu lokalen a internationale Wohlt\u00e4tegkeetsursaachen.",
+      tagline: "E j\u00e4hrleche Klassikerwagonsrallye duerch d\u00e9i g\u00eblle Herbschtlandschaften vu L\u00ebtzeb\u00ebreg, organiséiert vum Rotary Club Bascharage-Kordall zum Virdeel vu Wohlt\u00e4tegkeetsursaachen.",
       motto: "D\u00e9ngscht \u00fcwwert sech selwer",
       privacy: "Dateschutzpolitik",
       terms: "Allgemeng Geschäftsbedingungen",
