@@ -4,24 +4,27 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
-
-const navLinks = [
-  { label: "About", href: "#about" },
-  { label: "Route", href: "#route" },
-  { label: "Gallery", href: "#gallery" },
-  { label: "Register", href: "#register" },
-  { label: "Contact", href: "#contact" },
-];
+import { useLang } from "@/lib/i18n/LanguageContext";
+import { t } from "@/lib/i18n/translations";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { lang, setLang } = useLang();
+  const tr = t[lang].nav;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const navLinks = [
+    { label: tr.about, href: "#about" },
+    { label: tr.gallery, href: "#gallery" },
+    { label: tr.register, href: "#register" },
+    { label: tr.contact, href: "#contact" },
+  ];
 
   return (
     <header
@@ -55,22 +58,59 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+
+          {/* Language switcher */}
+          <div className="flex items-center gap-1 ml-2 border border-white/20 rounded-full px-1 py-0.5">
+            {(["fr", "en"] as const).map((l) => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider transition-[background-color,color] duration-200 focus-visible:outline-none ${
+                  lang === l
+                    ? "bg-sage text-forest"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+
           <Link
             href="#register"
-            className="ml-4 px-5 py-2 rounded-full text-sm font-semibold bg-sage text-forest hover:bg-sage-light active:scale-95 transition-[background-color,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
+            className="ml-2 px-5 py-2 rounded-full text-sm font-semibold bg-sage text-forest hover:bg-sage-light active:scale-95 transition-[background-color,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
           >
-            Register Now
+            {tr.registerNow}
           </Link>
         </nav>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage transition-colors"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label="Toggle menu"
-        >
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        {/* Mobile right side */}
+        <div className="md:hidden flex items-center gap-3">
+          {/* Language switcher mobile */}
+          <div className="flex items-center gap-1 border border-white/20 rounded-full px-1 py-0.5">
+            {(["fr", "en"] as const).map((l) => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-[background-color,color] duration-200 focus-visible:outline-none ${
+                  lang === l
+                    ? "bg-sage text-forest"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+
+          <button
+            className="text-white p-2 rounded-lg hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage transition-colors"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile drawer */}
@@ -95,7 +135,7 @@ export default function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="mt-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-sage text-forest text-center hover:bg-sage-light transition-colors"
           >
-            Register Now
+            {tr.registerNow}
           </Link>
         </nav>
       </div>

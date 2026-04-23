@@ -3,11 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
+import { useLang } from "@/lib/i18n/LanguageContext";
+import { t } from "@/lib/i18n/translations";
 
 export default function Hero() {
+  const { lang } = useLang();
+  const tr = t[lang].hero;
+
   return (
     <section className="relative w-full h-screen min-h-[600px] overflow-hidden flex items-center justify-center">
-      {/* Video background */}
       <video
         className="absolute inset-0 w-full h-full object-cover scale-105"
         src="https://assets.mixkit.co/videos/45312/45312-720.mp4"
@@ -17,12 +21,8 @@ export default function Hero() {
         playsInline
         preload="auto"
       />
-
-      {/* Multi-layer gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-forest/80 via-forest/50 to-forest/90" />
       <div className="absolute inset-0 bg-gradient-to-r from-forest/40 via-transparent to-forest/20" />
-
-      {/* Grain texture */}
       <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"
         style={{
@@ -32,9 +32,7 @@ export default function Hero() {
         }}
       />
 
-      {/* Hero content */}
       <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center pt-28 sm:pt-0">
-        {/* Rotary logo */}
         <div className="mb-8">
           <Image
             src="/logo.png"
@@ -46,49 +44,39 @@ export default function Hero() {
           />
         </div>
 
-        {/* Main title */}
         <h1 className="font-heading text-white text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-[-0.03em] mb-4">
-          Indian Summer
+          {tr.title}
           <br />
-          <span className="text-sage">Rally</span>
+          <span className="text-sage">{tr.titleAccent}</span>
         </h1>
 
-        {/* Year badge */}
         <div className="mt-3 mb-8 px-5 py-1.5 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm inline-flex">
           <span className="text-white/80 text-sm font-medium tracking-[0.2em] uppercase">
-            Luxembourg · 6 September 2026
+            {tr.badge}
           </span>
         </div>
 
-        {/* Sub-heading */}
         <p className="text-white/75 text-lg sm:text-xl max-w-2xl leading-relaxed mb-10 font-light">
-          A curated car journey through the golden autumn landscapes of
-          Luxembourg. The Rotary Club Bascharage-Kordall is organizing its 9th
-          Charity Rally, the &ldquo;ROTARY INDIAN SUMMER TOUR,&rdquo; dedicated to
-          Classic &amp; Sports Cars.
+          {tr.p1}
           <br /><br />
-          The event returns with enthusiasm and has been revamped with a few
-          adjustments to offer an even more exciting experience for enthusiasts
-          of historic and sports cars.
+          {tr.p2}
         </p>
 
-        {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <Link
             href="#register"
             className="px-8 py-3.5 rounded-full bg-sage text-forest font-semibold text-sm tracking-wide hover:bg-sage-light active:scale-[0.98] transition-[background-color,transform] duration-200 shadow-[0_8px_32px_rgba(82,183,136,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-forest"
           >
-            Register Your Vehicle and Driver(s)
+            {tr.cta1}
           </Link>
           <Link
             href="#about"
             className="px-8 py-3.5 rounded-full border border-white/30 text-white font-medium text-sm tracking-wide hover:bg-white/10 hover:border-white/50 active:scale-[0.98] transition-[background-color,border-color,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
-            Discover the Route
+            {tr.cta2}
           </Link>
         </div>
 
-        {/* Date strip */}
         <div className="mt-14 flex items-center gap-8 text-white/50 text-xs tracking-widest uppercase">
           <div className="text-center">
             <div className="text-white text-2xl font-heading font-bold leading-none">6</div>
@@ -97,25 +85,22 @@ export default function Hero() {
           <div className="h-px w-8 bg-white/20" />
           <div className="text-center">
             <div className="text-white text-2xl font-heading font-bold leading-none">10h00</div>
-            <div className="mt-1">Start</div>
+            <div className="mt-1">{tr.start}</div>
           </div>
           <div className="h-px w-8 bg-white/20" />
           <div className="text-center">
             <div className="text-white text-2xl font-heading font-bold leading-none">10h45</div>
-            <div className="mt-1">Briefing</div>
+            <div className="mt-1">{tr.briefing}</div>
           </div>
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <a
         href="#about"
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/40 hover:text-sage transition-colors duration-300 focus-visible:outline-none"
         aria-label="Scroll to about section"
       >
-        <span className="text-[10px] tracking-[0.2em] uppercase font-medium">
-          Scroll
-        </span>
+        <span className="text-[10px] tracking-[0.2em] uppercase font-medium">{tr.scroll}</span>
         <ChevronDown size={18} className="animate-bounce" />
       </a>
     </section>

@@ -10,14 +10,10 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
+import { useLang } from "@/lib/i18n/LanguageContext";
+import { t } from "@/lib/i18n/translations";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const MENUS = [
-  { id: "1", label: "Menu 1", dish: "Wiener Schnitzel" },
-  { id: "2", label: "Menu 2", dish: "Cannelloni Bolognese" },
-  { id: "3", label: "Menu 3", dish: "Vegetarian Cannelloni" },
-];
 
 const BASE_PRICE = 125;
 const EXTRA_PRICE = 20;
@@ -89,9 +85,10 @@ function inputClass(error?: string) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function RegisterCTA() {
+  const { lang } = useLang();
+  const tr = t[lang].register;
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Form state
   const [form, setForm] = useState<FormData>({
     driverName: "",
     copilotName: "",
@@ -109,7 +106,6 @@ export default function RegisterCTA() {
     { include: false, menu: "1" },
   ]);
 
-  // Flow state
   const [step, setStep] = useState<Step>("form");
   const [reference, setReference] = useState("");
   const [loading, setLoading] = useState(false);
@@ -135,8 +131,6 @@ export default function RegisterCTA() {
   const clearError = (key: string) =>
     setErrors((e) => { const n = { ...e }; delete n[key]; return n; });
 
-  // ── Participant helpers ─────────────────────────────────────────────────────
-
   const addExtra = () => {
     setExtraParticipants((n) => n + 1);
     setExtraNames((p) => [...p, ""]);
@@ -155,8 +149,6 @@ export default function RegisterCTA() {
     clearError(`extra_${i}`);
   };
 
-  // ── Meal helpers ────────────────────────────────────────────────────────────
-
   const toggleMeal = (i: number) =>
     setMealChoices((p) =>
       p.map((m, idx) => (idx === i ? { ...m, include: !m.include } : m))
@@ -171,29 +163,21 @@ export default function RegisterCTA() {
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
-
-    if (!form.driverName.trim()) e.driverName = "Driver name is required";
-    if (!form.copilotName.trim()) e.copilotName = "Co-pilot name is required";
-
+    if (!form.driverName.trim()) e.driverName = tr.valDriver;
+    if (!form.copilotName.trim()) e.copilotName = tr.valCopilot;
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      e.email = "A valid email address is required";
-
+      e.email = tr.valEmail;
     if (!form.phone.trim() || form.phone.replace(/\D/g, "").length < 6)
-      e.phone = "A valid phone number is required";
-
-    if (!form.carMake.trim()) e.carMake = "Car make is required";
-    if (!form.carModel.trim()) e.carModel = "Car model is required";
-
+      e.phone = tr.valPhone;
+    if (!form.carMake.trim()) e.carMake = tr.valMake;
+    if (!form.carModel.trim()) e.carModel = tr.valModel;
     const year = Number(form.carYear);
     if (!form.carYear.trim() || !/^\d{4}$/.test(form.carYear) || year < 1900 || year > 2026)
-      e.carYear = "Enter a valid 4-digit year";
-
+      e.carYear = tr.valYear;
     extraNames.forEach((name, i) => {
-      if (!name.trim()) e[`extra_${i}`] = "Name is required";
+      if (!name.trim()) e[`extra_${i}`] = tr.valExtraName;
     });
-
     setErrors(e);
-
     if (Object.keys(e).length > 0) {
       topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       return false;
@@ -207,7 +191,6 @@ export default function RegisterCTA() {
     if (!validate()) return;
     setLoading(true);
     setSubmitError("");
-
     try {
       const res = await fetch("/api/register", {
         method: "POST",
@@ -223,7 +206,6 @@ export default function RegisterCTA() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Registration failed");
-
       setReference(data.reference);
       setStep("bank");
       topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -236,21 +218,16 @@ export default function RegisterCTA() {
     }
   };
 
-  // ── Participant label helper ─────────────────────────────────────────────────
-
   const participantLabel = (i: number) => {
-    if (i === 0) return `${form.driverName || "Driver"} (Person 1)`;
-    if (i === 1) return `${form.copilotName || "Co-pilot"} (Person 2)`;
-    return `${extraNames[i - 2] || `Extra ${i - 1}`} (Person ${i + 1})`;
+    if (i === 0) return `${form.driverName || tr.driver} (${tr.person} 1)`;
+    if (i === 1) return `${form.copilotName || tr.copilot} (${tr.person} 2)`;
+    return `${extraNames[i - 2] || `${tr.extra} ${i - 1}`} (${tr.person} ${i + 1})`;
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  //  RENDER
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <section id="register" className="relative py-24 lg:py-32 overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 z-0">
         <Image src="/moselle-tour.avif" alt="Moselle Valley" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-br from-forest/95 via-forest/88 to-forest-dark/95" />
@@ -270,29 +247,23 @@ export default function RegisterCTA() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="h-px w-10 bg-sage/50" />
-            <span className="text-sage text-xs font-semibold tracking-[0.28em] uppercase">Registration</span>
+            <span className="text-sage text-xs font-semibold tracking-[0.28em] uppercase">{tr.eyebrow}</span>
             <div className="h-px w-10 bg-sage/50" />
           </div>
-          <h2 className="font-heading text-white text-4xl sm:text-5xl font-bold tracking-[-0.02em]">
-            Secure Your Place
-          </h2>
-          <p className="mt-4 text-white/65 text-lg max-w-xl mx-auto leading-relaxed">
-            Limited to 70 registrations, by order of payment.
-          </p>
+          <h2 className="font-heading text-white text-4xl sm:text-5xl font-bold tracking-[-0.02em]">{tr.title}</h2>
+          <p className="mt-4 text-white/65 text-lg max-w-xl mx-auto leading-relaxed">{tr.subtitle}</p>
         </div>
 
-        {/* ── STEP: FORM ────────────────────────────────────────────────────── */}
+        {/* ── STEP: FORM ── */}
         {step === "form" && (
           <div className="bg-white/8 backdrop-blur-sm border border-white/15 rounded-2xl overflow-hidden">
-
-            {/* Entry fee header */}
             <div className="p-8 border-b border-white/10">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-sage text-xs font-semibold tracking-[0.22em] uppercase mb-1">Team Entry</div>
-                  <h3 className="font-heading text-white text-2xl font-bold">2 Persons per Vehicle</h3>
+                  <div className="text-sage text-xs font-semibold tracking-[0.22em] uppercase mb-1">{tr.teamEntryLabel}</div>
+                  <h3 className="font-heading text-white text-2xl font-bold">{tr.teamEntryTitle}</h3>
                   <ul className="mt-3 space-y-1.5">
-                    {["Snack", "Roadbook with arrows", "Official rally plate"].map((item) => (
+                    {tr.includes.map((item) => (
                       <li key={item} className="flex items-center gap-2 text-white/65 text-sm">
                         <span className="w-4 h-4 rounded-full bg-sage/20 text-sage flex items-center justify-center text-[10px] font-bold flex-shrink-0">✓</span>
                         {item}
@@ -302,201 +273,127 @@ export default function RegisterCTA() {
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="font-heading text-white text-4xl font-bold">€{BASE_PRICE}</div>
-                  <div className="text-white/40 text-xs mt-1">per team</div>
+                  <div className="text-white/40 text-xs mt-1">{tr.perTeam}</div>
                 </div>
               </div>
             </div>
 
             <div className="p-8 space-y-8">
-
-              {/* ── Global error ── */}
               {(Object.keys(errors).length > 0 || submitError) && (
                 <div className="flex items-start gap-3 bg-red-500/10 border border-red-400/30 rounded-xl px-4 py-3">
                   <AlertCircle size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
                   <div className="text-red-300 text-sm">
-                    {submitError ||
-                      "Please fill in all required fields correctly before submitting."}
+                    {submitError || tr.errorGeneric}
                   </div>
                 </div>
               )}
 
-              {/* ── Team information ── */}
+              {/* Team info */}
               <div>
                 <h4 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-sage/20 text-sage text-xs font-bold flex items-center justify-center">1</span>
-                  Team Information
+                  {tr.step1}
                 </h4>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <InputField label="Driver Name" required error={errors.driverName}>
-                    <input
-                      type="text"
-                      placeholder="First and last name"
-                      value={form.driverName}
-                      onChange={(e) => setField("driverName", e.target.value)}
-                      className={inputClass(errors.driverName)}
-                    />
+                  <InputField label={tr.driverName} required error={errors.driverName}>
+                    <input type="text" placeholder={tr.namePlaceholder} value={form.driverName}
+                      onChange={(e) => setField("driverName", e.target.value)} className={inputClass(errors.driverName)} />
                   </InputField>
-                  <InputField label="Co-pilot Name" required error={errors.copilotName}>
-                    <input
-                      type="text"
-                      placeholder="First and last name"
-                      value={form.copilotName}
-                      onChange={(e) => setField("copilotName", e.target.value)}
-                      className={inputClass(errors.copilotName)}
-                    />
+                  <InputField label={tr.copilotName} required error={errors.copilotName}>
+                    <input type="text" placeholder={tr.namePlaceholder} value={form.copilotName}
+                      onChange={(e) => setField("copilotName", e.target.value)} className={inputClass(errors.copilotName)} />
                   </InputField>
-                  <InputField label="Email Address" required error={errors.email}>
-                    <input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={form.email}
-                      onChange={(e) => setField("email", e.target.value)}
-                      className={inputClass(errors.email)}
-                    />
+                  <InputField label={tr.email} required error={errors.email}>
+                    <input type="email" placeholder={tr.emailPlaceholder} value={form.email}
+                      onChange={(e) => setField("email", e.target.value)} className={inputClass(errors.email)} />
                   </InputField>
-                  <InputField label="Phone Number" required error={errors.phone}>
-                    <input
-                      type="tel"
-                      placeholder="+352 xxx xxx xxx"
-                      value={form.phone}
-                      onChange={(e) => setField("phone", e.target.value)}
-                      className={inputClass(errors.phone)}
-                    />
+                  <InputField label={tr.phone} required error={errors.phone}>
+                    <input type="tel" placeholder={tr.phonePlaceholder} value={form.phone}
+                      onChange={(e) => setField("phone", e.target.value)} className={inputClass(errors.phone)} />
                   </InputField>
                 </div>
               </div>
 
-              {/* ── Vehicle information ── */}
+              {/* Vehicle info */}
               <div>
                 <h4 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-sage/20 text-sage text-xs font-bold flex items-center justify-center">2</span>
-                  Vehicle Information
+                  {tr.step2}
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <InputField label="Make" required error={errors.carMake}>
-                    <input
-                      type="text"
-                      placeholder="e.g. Porsche"
-                      value={form.carMake}
-                      onChange={(e) => setField("carMake", e.target.value)}
-                      className={inputClass(errors.carMake)}
-                    />
+                  <InputField label={tr.make} required error={errors.carMake}>
+                    <input type="text" placeholder={tr.makePlaceholder} value={form.carMake}
+                      onChange={(e) => setField("carMake", e.target.value)} className={inputClass(errors.carMake)} />
                   </InputField>
-                  <InputField label="Model" required error={errors.carModel}>
-                    <input
-                      type="text"
-                      placeholder="e.g. 911"
-                      value={form.carModel}
-                      onChange={(e) => setField("carModel", e.target.value)}
-                      className={inputClass(errors.carModel)}
-                    />
+                  <InputField label={tr.model} required error={errors.carModel}>
+                    <input type="text" placeholder={tr.modelPlaceholder} value={form.carModel}
+                      onChange={(e) => setField("carModel", e.target.value)} className={inputClass(errors.carModel)} />
                   </InputField>
-                  <InputField label="Year" required error={errors.carYear}>
-                    <input
-                      type="text"
-                      placeholder="e.g. 1974"
-                      maxLength={4}
-                      value={form.carYear}
-                      onChange={(e) => setField("carYear", e.target.value.replace(/\D/g, ""))}
-                      className={inputClass(errors.carYear)}
-                    />
+                  <InputField label={tr.year} required error={errors.carYear}>
+                    <input type="text" placeholder={tr.yearPlaceholder} maxLength={4} value={form.carYear}
+                      onChange={(e) => setField("carYear", e.target.value.replace(/\D/g, ""))} className={inputClass(errors.carYear)} />
                   </InputField>
                 </div>
               </div>
 
-              {/* ── Extra participants ── */}
+              {/* Extra participants */}
               <div>
                 <h4 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-sage/20 text-sage text-xs font-bold flex items-center justify-center">3</span>
-                  Extra Participants
-                  <span className="text-white/40 text-xs font-normal ml-1">— €{EXTRA_PRICE} / person</span>
+                  {tr.step3}
+                  <span className="text-white/40 text-xs font-normal ml-1">— €{EXTRA_PRICE}{tr.step3Sub}</span>
                 </h4>
                 <div className="flex items-center gap-5 mb-4">
-                  <button
-                    onClick={removeExtra}
-                    disabled={extraParticipants === 0}
-                    aria-label="Remove participant"
-                    className="w-9 h-9 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-[background-color,opacity] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
-                  >
+                  <button onClick={removeExtra} disabled={extraParticipants === 0} aria-label="Remove participant"
+                    className="w-9 h-9 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-[background-color,opacity] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage">
                     <Minus size={16} />
                   </button>
                   <span className="font-heading text-white text-2xl font-bold w-6 text-center">{extraParticipants}</span>
-                  <button
-                    onClick={addExtra}
-                    aria-label="Add participant"
-                    className="w-9 h-9 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 transition-[background-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
-                  >
+                  <button onClick={addExtra} aria-label="Add participant"
+                    className="w-9 h-9 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 transition-[background-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage">
                     <Plus size={16} />
                   </button>
-                  {extraParticipants > 0 && (
-                    <span className="text-white/50 text-sm">
-                      +€{extraCost}
-                    </span>
-                  )}
+                  {extraParticipants > 0 && <span className="text-white/50 text-sm">+€{extraCost}</span>}
                 </div>
-
                 {extraNames.map((name, i) => (
                   <div key={i} className="mb-3">
-                    <InputField
-                      label={`Extra Participant ${i + 1} — Name`}
-                      required
-                      error={errors[`extra_${i}`]}
-                    >
-                      <input
-                        type="text"
-                        placeholder="First and last name"
-                        value={name}
-                        onChange={(e) => setExtraName(i, e.target.value)}
-                        className={inputClass(errors[`extra_${i}`])}
-                      />
+                    <InputField label={`${tr.extraLabel} ${i + 1} — ${tr.extraName}`} required error={errors[`extra_${i}`]}>
+                      <input type="text" placeholder={tr.namePlaceholder} value={name}
+                        onChange={(e) => setExtraName(i, e.target.value)} className={inputClass(errors[`extra_${i}`])} />
                     </InputField>
                   </div>
                 ))}
               </div>
 
-              {/* ── Meal options ── */}
+              {/* Meal options */}
               <div>
                 <h4 className="text-white font-semibold text-base mb-1 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-sage/20 text-sage text-xs font-bold flex items-center justify-center">4</span>
-                  Meal Options
-                  <span className="text-white/40 text-xs font-normal ml-1">— €{MEAL_PRICE} / person</span>
+                  {tr.step4}
+                  <span className="text-white/40 text-xs font-normal ml-1">— €{MEAL_PRICE}{tr.step4Sub}</span>
                 </h4>
-                <p className="text-white/45 text-sm mb-4 ml-8">Main course, dessert &amp; coffee</p>
-
+                <p className="text-white/45 text-sm mb-4 ml-8">{tr.mealDesc}</p>
                 <div className="space-y-3">
                   {syncedMeals.map((meal, i) => (
                     <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/10">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-white/75 text-sm font-medium">{participantLabel(i)}</span>
-                        <button
-                          onClick={() => toggleMeal(i)}
-                          aria-label={`Toggle meal for ${participantLabel(i)}`}
-                          className={`relative w-11 h-6 rounded-full transition-[background-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage ${
-                            meal.include ? "bg-sage" : "bg-white/20"
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                              meal.include ? "translate-x-5" : "translate-x-0"
-                            }`}
-                          />
+                        <button onClick={() => toggleMeal(i)} aria-label={`Toggle meal`}
+                          className={`relative w-11 h-6 rounded-full transition-[background-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage ${meal.include ? "bg-sage" : "bg-white/20"}`}>
+                          <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${meal.include ? "translate-x-5" : "translate-x-0"}`} />
                         </button>
                       </div>
-
                       {meal.include && (
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          {MENUS.map((menu) => (
-                            <button
-                              key={menu.id}
-                              onClick={() => setMenu(i, menu.id)}
+                          {tr.menus.map((menuLabel, mi) => (
+                            <button key={mi} onClick={() => setMenu(i, String(mi + 1))}
                               className={`text-left px-3 py-2.5 rounded-lg border text-sm transition-[background-color,border-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage ${
-                                meal.menu === menu.id
+                                meal.menu === String(mi + 1)
                                   ? "bg-sage/20 border-sage text-white"
                                   : "bg-white/5 border-white/15 text-white/60 hover:border-white/30 hover:text-white/80"
-                              }`}
-                            >
-                              <div className="font-semibold text-xs tracking-wide">{menu.label}</div>
-                              <div className="text-[11px] mt-0.5 opacity-80">{menu.dish}</div>
+                              }`}>
+                              <div className="font-semibold text-xs tracking-wide">{menuLabel}</div>
+                              <div className="text-[11px] mt-0.5 opacity-80">{tr.dishes[mi]}</div>
                             </button>
                           ))}
                         </div>
@@ -506,64 +403,55 @@ export default function RegisterCTA() {
                 </div>
               </div>
 
-              {/* ── Price summary ── */}
+              {/* Price summary */}
               <div className="bg-white/5 rounded-xl border border-white/10 px-6 py-5">
                 <div className="space-y-2 mb-5">
                   <div className="flex justify-between text-white/60 text-sm">
-                    <span>Team entry (2 persons)</span>
-                    <span>€{BASE_PRICE}</span>
+                    <span>{tr.teamEntry}</span><span>€{BASE_PRICE}</span>
                   </div>
                   {extraParticipants > 0 && (
                     <div className="flex justify-between text-white/60 text-sm">
-                      <span>Extra participant(s) ({extraParticipants} × €{EXTRA_PRICE})</span>
+                      <span>{tr.extraLine} ({extraParticipants} × €{EXTRA_PRICE})</span>
                       <span>€{extraCost}</span>
                     </div>
                   )}
                   {mealCost > 0 && (
                     <div className="flex justify-between text-white/60 text-sm">
-                      <span>Meals ({syncedMeals.filter((m) => m.include).length} × €{MEAL_PRICE})</span>
+                      <span>{tr.mealsLine} ({syncedMeals.filter((m) => m.include).length} × €{MEAL_PRICE})</span>
                       <span>€{mealCost}</span>
                     </div>
                   )}
                   <div className="border-t border-white/15 pt-3 flex justify-between items-baseline">
-                    <span className="text-white font-semibold">Total</span>
+                    <span className="text-white font-semibold">{tr.total}</span>
                     <span className="font-heading text-white text-3xl font-bold">€{total}</span>
                   </div>
                 </div>
-
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="w-full py-3.5 rounded-full bg-sage text-forest font-semibold text-sm text-center hover:bg-sage-light active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[background-color,transform,opacity] duration-200 shadow-[0_8px_32px_rgba(82,183,136,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage flex items-center justify-center gap-2"
-                >
+                <button onClick={handleSubmit} disabled={loading}
+                  className="w-full py-3.5 rounded-full bg-sage text-forest font-semibold text-sm text-center hover:bg-sage-light active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[background-color,transform,opacity] duration-200 shadow-[0_8px_32px_rgba(82,183,136,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage flex items-center justify-center gap-2">
                   {loading ? (
-                    <><Loader2 size={16} className="animate-spin" /> Processing…</>
+                    <><Loader2 size={16} className="animate-spin" /> {tr.processing}</>
                   ) : (
-                    `Send Registration — €${total}`
+                    `${tr.submitBtn} — €${total}`
                   )}
                 </button>
-                <p className="text-white/30 text-xs text-center mt-3">
-                  A confirmation email will be sent to the organising team upon submission.
-                </p>
+                <p className="text-white/30 text-xs text-center mt-3">{tr.confirmNote}</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── STEP: BANK TRANSFER ───────────────────────────────────────────── */}
+        {/* ── STEP: BANK TRANSFER ── */}
         {step === "bank" && (
           <div className="bg-white/8 backdrop-blur-sm border border-white/15 rounded-2xl overflow-hidden">
-
-            {/* Confirmation banner */}
             <div className="p-6 border-b border-white/10 flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-sage/20 flex items-center justify-center flex-shrink-0">
                 <CheckCircle size={22} className="text-sage" />
               </div>
               <div>
-                <div className="text-white font-semibold">Registration received</div>
+                <div className="text-white font-semibold">{tr.registrationReceived}</div>
                 <div className="text-white/50 text-sm">
-                  Reference: <span className="text-sage font-mono font-semibold">{reference}</span>
-                  {" "}· Total: <span className="text-white font-semibold">€{total}</span>
+                  {tr.reference}: <span className="text-sage font-mono font-semibold">{reference}</span>
+                  {" "}· {tr.total}: <span className="text-white font-semibold">€{total}</span>
                 </div>
               </div>
             </div>
@@ -574,31 +462,27 @@ export default function RegisterCTA() {
                   <Building2 size={22} className="text-sage" />
                 </div>
                 <div>
-                  <h3 className="font-heading text-white text-2xl font-bold leading-tight">Bank Transfer Details</h3>
-                  <p className="text-white/50 text-sm">Please complete your payment to confirm your place.</p>
+                  <h3 className="font-heading text-white text-2xl font-bold leading-tight">{tr.bankTitle}</h3>
+                  <p className="text-white/50 text-sm">{tr.bankSubtitle}</p>
                 </div>
               </div>
 
               <div className="bg-white/5 border border-white/10 rounded-xl divide-y divide-white/10 mb-6">
                 {[
-                  { label: "Account Name", value: ACCOUNT_NAME },
-                  { label: "Bank", value: BANK_NAME },
+                  { label: tr.accountName, value: ACCOUNT_NAME },
+                  { label: tr.bank, value: BANK_NAME },
                   { label: "IBAN", value: BANK_IBAN },
                   { label: "BIC / SWIFT", value: BANK_BIC },
-                  { label: "Amount", value: `€${total}` },
-                  { label: "Payment Reference", value: reference },
+                  { label: tr.amount, value: `€${total}` },
+                  { label: tr.paymentRef, value: reference },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex justify-between items-center px-5 py-3.5 gap-4">
                     <span className="text-white/45 text-sm flex-shrink-0">{label}</span>
-                    <span
-                      className={`text-sm font-semibold text-right break-all ${
-                        label === "Payment Reference"
-                          ? "text-sage font-mono"
-                          : label === "Amount"
-                          ? "text-white text-lg font-bold"
-                          : "text-white"
-                      }`}
-                    >
+                    <span className={`text-sm font-semibold text-right break-all ${
+                      label === tr.paymentRef ? "text-sage font-mono"
+                      : label === tr.amount ? "text-white text-lg font-bold"
+                      : "text-white"
+                    }`}>
                       {value}
                     </span>
                   </div>
@@ -606,10 +490,14 @@ export default function RegisterCTA() {
               </div>
 
               <div className="bg-sage/10 border border-sage/25 rounded-xl px-5 py-4 text-white/65 text-sm leading-relaxed">
-                <strong className="text-white">Important:</strong> Please include your reference number{" "}
-                <span className="text-sage font-mono font-semibold">{reference}</span> in the payment
-                description so we can identify your registration. Your place will be confirmed once
-                payment is received. SEPA transfers typically process within 1–3 banking days.
+                <strong className="text-white">{tr.paymentNote}</strong>{" "}
+                {tr.paymentNoteText.split(reference).length > 1 ? (
+                  <>
+                    {tr.paymentNoteText.split(reference)[0]}
+                    <span className="text-sage font-mono font-semibold">{reference}</span>
+                    {tr.paymentNoteText.split(reference)[1]}
+                  </>
+                ) : tr.paymentNoteText}
               </div>
             </div>
           </div>
@@ -617,11 +505,7 @@ export default function RegisterCTA() {
 
         {/* Info strip */}
         <div className="grid sm:grid-cols-3 gap-4 mt-8 text-center">
-          {[
-            { label: "Registration", value: "Now Open" },
-            { label: "Registration Deadline", value: "25 August 2026" },
-            { label: "Places Limited", value: "70 registrations — by order of payment" },
-          ].map(({ label, value }) => (
+          {tr.strip.map(({ label, value }) => (
             <div key={label} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-6 py-5">
               <div className="text-white/50 text-xs tracking-[0.18em] uppercase mb-1">{label}</div>
               <div className="text-white font-heading text-lg font-semibold">{value}</div>
