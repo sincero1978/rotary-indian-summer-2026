@@ -330,7 +330,7 @@ export const t = {
     footer: {
       nav: "Navigation",
       contact: "Contact",
-      tagline: "Un rallye annuel de voitures classiques \u00e0 travers les paysages dor\u00e9s de l\u2019automne luxembourgeois, organis\u00e9 par le Rotary Club Bascharage-Kordall au profit de causes caritatives locales et internationales.",
+      tagline: "Un rallye annuel de voitures classiques et de sport \u00e0 travers les paysages dor\u00e9s de l\u2019automne luxembourgeois, organis\u00e9 par le Rotary Club Bascharage-Kordall au profit de causes caritatives locales et internationales.",
       motto: "Au service des autres",
       privacy: "Politique de confidentialit\u00e9",
       terms: "Conditions g\u00e9n\u00e9rales",
