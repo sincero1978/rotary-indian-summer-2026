@@ -61,7 +61,7 @@ export default function Navbar() {
 
           {/* Language switcher */}
           <div className="flex items-center gap-1 ml-2 border border-white/20 rounded-full px-1 py-0.5">
-            {(["fr", "en"] as const).map((l) => (
+            {(["lb", "fr", "en"] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => setLang(l)}
@@ -88,7 +88,7 @@ export default function Navbar() {
         <div className="md:hidden flex items-center gap-3">
           {/* Language switcher mobile */}
           <div className="flex items-center gap-1 border border-white/20 rounded-full px-1 py-0.5">
-            {(["fr", "en"] as const).map((l) => (
+            {(["lb", "fr", "en"] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => setLang(l)}

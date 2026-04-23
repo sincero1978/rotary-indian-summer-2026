@@ -95,6 +95,48 @@ const emailStrings = {
     subjectOrganiser: (ref: string, driver: string, copilot: string) => `[Rotary Indian Summer Rally] Inscription ${ref} - ${driver} & ${copilot}`,
     subjectDriver: (driver: string, copilot: string) => `[Rotary Indian Summer Rally] Inscription Confirmée - ${driver} & ${copilot}`,
   },
+
+  lb: {
+    noMeal: "Kee Iessen",
+    person: "Persoun",
+    newRegistration: "Nei Umeldung",
+    teamInfo: "Teamsinformatiounen",
+    driver: "Fuerer",
+    copilot: "Copilot",
+    email: "E-Mail",
+    phone: "Telefon",
+    vehicle: "Gefier",
+    extraParticipants: "Zousätzlech Participate",
+    mealSelections: "Iessensauswiel",
+    participant: "Participant",
+    selection: "Auswiel",
+    priceBreakdown: "Präisopstellung",
+    teamEntry: "Team-Umeldung (2 Persoune)",
+    extraLine: (n: number, cost: number) => `Zousätzlech Participate (${n} × €20): <strong>€${cost}</strong>`,
+    mealsLine: (n: number, cost: number) => `Iessen (${n} × €35): <strong>€${cost}</strong>`,
+    total: "Total",
+    totalDue: "Fälleg Total",
+    eventDetails: "Evenementdetailer",
+    date: "Sonndeg, 6. September 2026",
+    startBriefing: "Start: 10h00 — Briefing: 10h45",
+    location: "Mess-Café / Reckange-sur-Mess",
+    routebook: "Roadbook mat Pfeil am Dag geliwwert (keng Duerchschnëttsgeschwindegkeet ze halen)",
+    motto: "Déngscht iwwert sech selwer",
+    registrationConfirmed: "Umeldung Confirméiert",
+    yourRegistration: "Är Umeldung",
+    priceSummary: "Präiszesummefaassung",
+    greeting: (name: string) => `Léif ${name},`,
+    intro: `Merci fir Är Umeldung fir den <strong>9. Rotary Indian Summer Tour 2026</strong>. Mir freeën eis Iech an Äert Team bei dësem Wohltätegkeetsrallye wëllkomm ze heeschen. Är Umeldung gouf kritt a gëtt hei ënnen zesummegefaasst.`,
+    paymentInstructions: "Bezuelungsinstruktiounen",
+    paymentIntro: (total: number) => `Schéckt w.e.g. de Betrag vun <strong>€${total}</strong> duerch Banküberweisung op dat folgend Konto:`,
+    accountName: "Kontonumm",
+    bank: "Bank",
+    paymentCommLabel: "Bezuelungsmitteilung (obligatoresch)",
+    paymentWarning: "⚠️ Schreiwt w.e.g. d'exakt Kommunikatioun uewen an Ärer Überweisung, fir datt mir Är Bezuelung identifizéieren kënnen. Äre Plaz gëtt bestätegt wann d'Bezuelung kritt gouf. SEPA-Überweisunge gi meeschtens bannent 1–3 Bankdagen verarbeecht.",
+    closing: "Wann Dir Froen hutt, zéckt w.e.g. net, eis duerch Äntwerten op dës E-Mail ze kontaktéieren.<br>Mir freeën eis Iech op der Streck ze gesinn!",
+    subjectOrganiser: (ref: string, driver: string, copilot: string) => `[Rotary Indian Summer Rally] Umeldung ${ref} - ${driver} & ${copilot}`,
+    subjectDriver: (driver: string, copilot: string) => `[Rotary Indian Summer Rally] Umeldung Confirméiert - ${driver} & ${copilot}`,
+  },
 };
 
 const MENUS: Record<string, Record<string, string>> = {
@@ -107,6 +149,11 @@ const MENUS: Record<string, Record<string, string>> = {
     "1": "Menu 1 — Wiener Schnitzel",
     "2": "Menu 2 — Cannelloni Bolognaise",
     "3": "Menu 3 — Cannelloni Végétarien",
+  },
+  lb: {
+    "1": "Menu 1 — Wiener Schnitzel",
+    "2": "Menu 2 — Cannelloni Bolognese",
+    "3": "Menu 3 — Vegetaresche Cannelloni",
   },
 };
 
@@ -141,7 +188,7 @@ interface RegistrationPayload {
 
 // ─── Organiser email ──────────────────────────────────────────────────────────
 
-function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr"): string {
+function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr" | "lb"): string {
   const s = emailStrings[lang];
   const menus = MENUS[lang];
   const participants = [data.driverName, data.copilotName, ...data.extraNames];
@@ -238,7 +285,7 @@ function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" |
 
 // ─── Driver confirmation email ────────────────────────────────────────────────
 
-function buildDriverHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr"): string {
+function buildDriverHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr" | "lb"): string {
   const s = emailStrings[lang];
   const menus = MENUS[lang];
   const participants = [data.driverName, data.copilotName, ...data.extraNames];
@@ -390,7 +437,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const lang: "en" | "fr" = body.lang === "en" ? "en" : "fr";
+    const lang: "en" | "fr" | "lb" = body.lang === "en" ? "en" : body.lang === "fr" ? "fr" : "lb";
     const s = emailStrings[lang];
     const reference = generateReference();
 
