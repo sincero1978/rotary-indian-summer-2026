@@ -24,15 +24,13 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-2">
             <div className="mb-5">
-              <div className="text-[10px] font-medium tracking-[0.22em] uppercase text-sage/70 mb-0.5">
-                Rotary Club Bascharage-Kordall
-              </div>
-              <div className="font-heading text-white text-2xl font-bold tracking-tight leading-tight">
-                Indian Summer Rally
-              </div>
-              <div className="text-[10px] tracking-[0.18em] text-white/40 uppercase mt-0.5">
-                2026 Edition
-              </div>
+              <Image
+                src="/rally-logo.png"
+                alt="Rotary Indian Summer Tour 2026"
+                width={1184}
+                height={621}
+                className="w-48 sm:w-56 h-auto object-contain"
+              />
             </div>
             {tr.tagline && <p className="text-white/55 text-sm leading-[1.8] max-w-xs">{tr.tagline}</p>}
             <div className="mt-6 flex items-center gap-3">
