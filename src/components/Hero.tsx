@@ -52,12 +52,6 @@ export default function Hero() {
           />
         </div>
 
-        <h1 className="font-heading text-white text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-[-0.03em] mb-3 sm:mb-4">
-          {tr.title}
-          <br />
-          <span className="text-sage">{tr.titleAccent}</span>
-        </h1>
-
         <div className="mt-2 sm:mt-3 mb-4 sm:mb-8 px-4 sm:px-5 py-1.5 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm inline-flex">
           <span className="text-white/80 text-xs sm:text-sm font-medium tracking-[0.15em] sm:tracking-[0.2em] uppercase">
             {tr.badge}
