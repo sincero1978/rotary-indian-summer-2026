@@ -47,7 +47,7 @@ export default function Hero() {
             alt="9th Rotary Indian Summer Classic & Sports Cars Tour 2026"
             width={320}
             height={128}
-            className="h-24 sm:h-36 w-auto object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+            className="h-36 sm:h-[216px] w-auto object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
             priority
           />
         </div>
