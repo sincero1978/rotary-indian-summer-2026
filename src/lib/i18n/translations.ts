@@ -410,18 +410,18 @@ export const t = {
           accent: "All Kategorien zougelooss",
         },
         {
-          title: "Rotary Fr\u00ebndschaft",
-          body: "Organiséiert vum Rotary Club Bascharage-Kordall, wou all Nettogew\u00ebnn Wohlt\u00e4tegkeetsprojeten ënnerstëtzen.",
+          title: "Rotary-Fr\u00ebndschaft",
+          body: "Organiséiert vum Rotary Club Bascharage-Kordall, Wuelt\u00e4tegsprojeten ënnerstëtzt.",
           accent: "Zesummen h\u00ebllefe",
         },
         {
           title: "Eng gutt Saach ënnerstëtzen",
-          body: "All Nettogew\u00ebnn vum Rallye g\u00ebn direkt u wohlt\u00e4teg Zwecker, am w\u00e4re Rotary-Geescht.",
-          accent: "D\u00e9ngscht \u00fcwwert sech selwer",
+          body: "Den Erl\u00e9is vum Rallye geet u wuelt\u00e4teg Zwecker ganz am Rotary-Geescht.",
+          accent: "Am D\u00e9ngscht vun deenen aneren",
         },
         {
           title: "Onvergiessbar Er\u00ebnnerungen",
-          body: "Professionell Fotografe sinn den ganzen Dag do, fir all Moment festzehalen. All Participate kr\u00e9ien no dem Rallye Zougang zur vollst\u00e4neger Evenement-Fotosgalerie.",
+          body: "Fotografe si de ganzen Dag do, fir all Moment festzehalen. All Participantë kr\u00e9ien nom Rallye Zougang zur vollst\u00e4nneger Foto-Galerie vum Evenement.",
           accent: "Voll Fotosgalerie-Zougang",
         },
       ],
