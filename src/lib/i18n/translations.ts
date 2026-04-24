@@ -380,7 +380,7 @@ export const t = {
       p5: "All Gew\u00ebnn g\u00ebtt fir sozial a humanit\u00e4r Zwecker benotzt.",
       date: "Sonndeg, 6. September 2026",
       location: "Start & Ariv\u00e9e: Mess-Caf\u00e9 / Reckange-sur-Mess",
-      routebook: "Roadbook mat Pfeil (keng Duerchschn\u00ebttsgeschw\u00ebnnegkeet ze halen)",
+      routebook: "",
       stat1Label: "Dag",
       stat1Sub: "6. Sep 2026",
       stat2Label: "km",

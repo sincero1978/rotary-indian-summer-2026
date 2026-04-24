@@ -39,9 +39,11 @@ export default function About() {
               <div className="flex items-center gap-2 text-warm-gray text-sm">
                 <span className="text-sage">📍</span> {tr.location}
               </div>
-              <div className="flex items-center gap-2 text-warm-gray text-sm">
-                <span className="text-sage">🗺</span> {tr.routebook}
-              </div>
+              {tr.routebook && (
+                <div className="flex items-center gap-2 text-warm-gray text-sm">
+                  <span className="text-sage">🗺</span> {tr.routebook}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-border">
