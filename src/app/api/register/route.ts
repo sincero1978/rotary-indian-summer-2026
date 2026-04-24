@@ -121,7 +121,7 @@ const emailStrings = {
     startBriefing: "Start: 10h00 — Briefing: 10h45",
     location: "Mess-Café / Reckange-sur-Mess",
     routebook: "Roadbook mat Pfeil am Dag geliwwert (keng Duerchschnëttsgeschwindegkeet ze halen)",
-    motto: "Déngscht iwwert sech selwer",
+    motto: "Am Déngscht vun deenen aneren",
     registrationConfirmed: "Umeldung Confirméiert",
     yourRegistration: "Är Umeldung",
     priceSummary: "Präiszesummefaassung",

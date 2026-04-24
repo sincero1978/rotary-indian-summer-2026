@@ -156,7 +156,7 @@ export const t = {
     footer: {
       nav: "Navigation",
       contact: "Contact",
-      tagline: "An annual classic car rally through Luxembourg\u2019s golden autumn landscapes, organised by Rotary Club Bascharage-Kordall in support of charitable causes.",
+      tagline: "",
       motto: "Service Above Self",
       privacy: "Privacy Policy",
       terms: "Terms & Conditions",
@@ -330,7 +330,7 @@ export const t = {
     footer: {
       nav: "Navigation",
       contact: "Contact",
-      tagline: "Un rallye annuel de voitures classiques et de sport \u00e0 travers les paysages dor\u00e9s de l\u2019automne luxembourgeois, organis\u00e9 par le Rotary Club Bascharage-Kordall au profit de causes caritatives.",
+      tagline: "",
       motto: "Au service des autres",
       privacy: "Politique de confidentialit\u00e9",
       terms: "Conditions g\u00e9n\u00e9rales",
@@ -351,7 +351,7 @@ export const t = {
 
   lu: {
     nav: {
-      about: "\u00c0 Propos",
+      about: "\u00c0 propos",
       gallery: "Galerie",
       register: "Umeldung",
       contact: "Kontakt",
@@ -504,8 +504,8 @@ export const t = {
     footer: {
       nav: "Navigatioun",
       contact: "Kontakt",
-      tagline: "E j\u00e4hrleche Klassikerwagonsrallye duerch d\u00e9i g\u00eblle Herbschtlandschaften vu L\u00ebtzeb\u00ebreg, organiséiert vum Rotary Club Bascharage-Kordall zum Virdeel vu Wohlt\u00e4tegkeetsursaachen.",
-      motto: "D\u00e9ngscht \u00fcwwert sech selwer",
+      tagline: "",
+      motto: "Am D\u00e9ngscht vun deenen aneren",
       privacy: "Dateschutzpolitik",
       terms: "Allgemeng Geschäftsbedingungen",
       rights: "\u00a9 2026 Rotary Club Bascharage-Kordall \u2014 Indian Summer Rally. All Rechter reserv\u00e9iert.",

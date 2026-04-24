@@ -34,7 +34,7 @@ export default function Footer() {
                 2026 Edition
               </div>
             </div>
-            <p className="text-white/55 text-sm leading-[1.8] max-w-xs">{tr.tagline}</p>
+            {tr.tagline && <p className="text-white/55 text-sm leading-[1.8] max-w-xs">{tr.tagline}</p>}
             <div className="mt-6 flex items-center gap-3">
               <Image
                 src="/rotary-international-logo.png"
