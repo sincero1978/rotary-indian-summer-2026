@@ -48,7 +48,7 @@ export const t = {
       cards: [
         {
           title: "Spectacular Landscapes",
-          body: "Wind through Luxembourg\u2019s golden autumn vineyards, forest passes, and the dramatic Moselle River valley.",
+          body: "Drive during the golden autumn through the west of Luxembourg with its warm colours and after each turn, admire the beauty of the country.",
           accent: "130 km of scenic roads",
         },
         {
@@ -222,7 +222,7 @@ export const t = {
       cards: [
         {
           title: "Paysages spectaculaires",
-          body: "Traversez les vignobles dor\u00e9s de l\u2019automne luxembourgeois, les cols forestiers et la dramatique vall\u00e9e de la Moselle.",
+          body: "Conduisez durant l\u2019automne dor\u00e9 \u00e0 travers l\u2019ouest du Luxembourg avec ses chaudes couleurs, et apr\u00e8s chaque virage, admirez la beaut\u00e9 du pays.",
           accent: "130 km de routes sc\u00e9niques",
         },
         {
@@ -396,7 +396,7 @@ export const t = {
       cards: [
         {
           title: "Spektakul\u00e4r Landschaften",
-          body: "Fuert duerch d\u00e9i g\u00eblle Herbscht-W\u00e9ngerte vu L\u00ebtzeb\u00ebreg, Bëschp\u00e4ss an d\u00e9i dramatesch Muselvallee.",
+          body: "Fuert am g\u00ebllene Hierscht duerch de Westen vun L\u00ebtzeb\u00fcerg mat sengen waarme Faarwen, an losst no all K\u00e9ier d\u2019Sch\u00e9inheet vum Land op Iech.",
           accent: "130 km Panoramastroosse",
         },
         {
