@@ -81,7 +81,7 @@ export const t = {
     gallery: {
       eyebrow: "The Experience",
       title: "Captured in Light",
-      subtitle: "Luxembourg\u2019s autumn is unlike any other. Golden vineyards, ancient stone fortresses, and roads that seem to have been made for classic cars.",
+      subtitle: "",
       caption: "Full photo gallery available to registered participants after the rally",
     },
     register: {
@@ -255,7 +255,7 @@ export const t = {
     gallery: {
       eyebrow: "L\u2019exp\u00e9rience",
       title: "Captur\u00e9 en lumi\u00e8re",
-      subtitle: "L\u2019automne luxembourgeois est unique. Vignobles dor\u00e9s, forteresses de pierre anciennes et routes qui semblent avoir \u00e9t\u00e9 faites pour les voitures classiques.",
+      subtitle: "",
       caption: "Galerie photo compl\u00e8te disponible apr\u00e8s le rallye pour les participants inscrits",
     },
     register: {
@@ -428,8 +428,8 @@ export const t = {
     },
     gallery: {
       eyebrow: "D\u2019Erfahrung",
-      title: "Am Liicht festgehalen",
-      subtitle: "Den L\u00ebtzebuerger Herbscht ass anescht w\u00e9i jee. G\u00ebll W\u00e9ngerten, al Steeféstungen a Stroossen, déi sch\u00e9nge fir Klassikerwagen gemaach ze sinn.",
+      title: "Foto-Galerie",
+      subtitle: "",
       caption: "Komplett Fotosgalerie no dem Rallye f\u00ebr ageschriwwe Participate verf\u00fcgbar",
     },
     register: {

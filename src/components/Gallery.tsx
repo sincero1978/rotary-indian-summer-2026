@@ -64,7 +64,9 @@ export default function Gallery() {
             <div className="h-px w-10 bg-sage/50" />
           </div>
           <h2 className="font-heading text-white text-3xl sm:text-4xl md:text-5xl font-bold tracking-[-0.02em]">{tr.title}</h2>
-          <p className="mt-4 text-white/60 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">{tr.subtitle}</p>
+          {tr.subtitle && (
+            <p className="mt-4 text-white/60 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">{tr.subtitle}</p>
+          )}
         </div>
 
         {/*
