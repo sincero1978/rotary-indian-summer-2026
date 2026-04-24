@@ -20,8 +20,8 @@ const EXTRA_PRICE = 20;
 const MEAL_PRICE = 35;
 
 const BANK_IBAN = "LU80 0019 4955 0049 5000";
-const BANK_BIC = "BGLLLULL";
-const BANK_NAME = "BGL BNP Paribas";
+const BANK_BIC = "BCEELULL";
+const BANK_NAME = "BCEE Spuerkeess";
 const ACCOUNT_NAME = "Rotary Club Bascharage-Kordall";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -132,6 +132,7 @@ export default function RegisterCTA() {
     setErrors((e) => { const n = { ...e }; delete n[key]; return n; });
 
   const addExtra = () => {
+    if (extraParticipants >= 2) return;
     setExtraParticipants((n) => n + 1);
     setExtraNames((p) => [...p, ""]);
     setMealChoices((p) => [...p, { include: false, menu: "1" }]);
@@ -350,8 +351,8 @@ export default function RegisterCTA() {
                     <Minus size={16} />
                   </button>
                   <span className="font-heading text-white text-2xl font-bold w-6 text-center">{extraParticipants}</span>
-                  <button onClick={addExtra} aria-label="Add participant"
-                    className="w-9 h-9 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 transition-[background-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage">
+                  <button onClick={addExtra} disabled={extraParticipants >= 2} aria-label="Add participant"
+                    className="w-9 h-9 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-[background-color,opacity] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage">
                     <Plus size={16} />
                   </button>
                   {extraParticipants > 0 && <span className="text-white/50 text-sm">+€{extraCost}</span>}

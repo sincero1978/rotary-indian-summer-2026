@@ -37,7 +37,24 @@ export default function About() {
                 <span className="text-sage">📅</span> {tr.date}
               </div>
               <div className="flex items-center gap-2 text-warm-gray text-sm">
-                <span className="text-sage">📍</span> {tr.location}
+                <span className="text-sage">📍</span>
+                {tr.location.split("Mess-Café").map((part, i, arr) =>
+                  i < arr.length - 1 ? (
+                    <span key={i}>
+                      {part}
+                      <a
+                        href="https://www.google.com/maps/place/Restaurant-Brasserie+Mess+Caf%C3%A9+S%C3%A0rl/@49.558568,6.0059062,832m/data=!3m2!1e3!4b1!4m6!3m5!1s0x47954af4570a8e0f:0xdba89dada1cecad8!8m2!3d49.5585645!4d6.0084811!16s%2Fg%2F1tnsqw5x?entry=ttu&g_ep=EgoyMDI2MDQyMS4wIKXMDSoASAFQAw%3D%3D"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-forest font-semibold underline underline-offset-2 hover:text-sage transition-colors duration-200"
+                      >
+                        Mess-Café
+                      </a>
+                    </span>
+                  ) : (
+                    <span key={i}>{part}</span>
+                  )
+                )}
               </div>
               {tr.routebook && (
                 <div className="flex items-center gap-2 text-warm-gray text-sm">

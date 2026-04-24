@@ -5,8 +5,8 @@ const SENDER = '"Rotary Indian Summer Tour 2026" <rotarybascharagekordall@gmail.
 const ORGANISER_RECIPIENTS = ["Rist2026@hotmail.com", "rotarybascharagekordall@gmail.com"];
 
 const BANK_IBAN = "LU80 0019 4955 0049 5000";
-const BANK_BIC = "BGLLLULL";
-const BANK_NAME = "BGL BNP Paribas";
+const BANK_BIC = "BCEELULL";
+const BANK_NAME = "BCEE Spuerkeess";
 const ACCOUNT_NAME = "Rotary Club Bascharage-Kordall";
 
 // ─── i18n strings for emails ──────────────────────────────────────────────────
@@ -100,7 +100,7 @@ const emailStrings = {
     noMeal: "Kee Iessen",
     person: "Persoun",
     newRegistration: "Nei Umeldung",
-    teamInfo: "Teamsinformatiounen",
+    teamInfo: "Team Informatiounen",
     driver: "Fuerer",
     copilot: "Copilot",
     email: "E-Mail",
@@ -435,6 +435,11 @@ export async function POST(req: NextRequest) {
       !body.carYear?.trim()
     ) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const extraCount = Number(body.extraParticipants) || 0;
+    if (extraCount < 0 || extraCount > 2) {
+      return NextResponse.json({ error: "Invalid number of extra participants" }, { status: 400 });
     }
 
     const lang: "en" | "fr" | "lu" = body.lang === "en" ? "en" : body.lang === "fr" ? "fr" : "lu";
