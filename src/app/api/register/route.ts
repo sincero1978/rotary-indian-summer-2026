@@ -36,7 +36,7 @@ const emailStrings = {
     date: "Sunday, 6 September 2026",
     startBriefing: "Start: 10h00 — Briefing: 10h45",
     location: "Mess-Café / Reckange-sur-Mess",
-    routebook: "Route book with arrows provided on the day (no average speed to maintain)",
+    routebook: "Roadbook provided on the day",
     motto: "Service Above Self",
     // driver email
     registrationConfirmed: "Registration Confirmed",
@@ -78,7 +78,7 @@ const emailStrings = {
     date: "Dimanche, 6 septembre 2026",
     startBriefing: "Départ : 10h00 — Briefing : 10h45",
     location: "Mess-Café / Reckange-sur-Mess",
-    routebook: "Road-book avec flèches fourni le jour même (pas de vitesse moyenne à maintenir)",
+    routebook: "Roadbook fourni le jour même",
     motto: "Au service des autres",
     registrationConfirmed: "Inscription Confirmée",
     yourRegistration: "Votre Inscription",
