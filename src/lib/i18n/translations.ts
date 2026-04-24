@@ -44,7 +44,7 @@ export const t = {
     highlights: {
       eyebrow: "Rally Highlights",
       title: "Everything You Need to Know",
-      subtitle: "Every detail considered, every road chosen for beauty. The Indian Summer Rally is designed to be the motoring event of the year.",
+      subtitle: "",
       cards: [
         {
           title: "Spectacular Landscapes",
@@ -218,7 +218,7 @@ export const t = {
     highlights: {
       eyebrow: "Points forts du Rallye",
       title: "Tout ce que vous devez savoir",
-      subtitle: "Chaque d\u00e9tail pens\u00e9, chaque route choisie pour sa beaut\u00e9, l\u2019Indian Summer Rally est con\u00e7u pour \u00eatre l\u2019\u00e9v\u00e9nement automobile de l\u2019ann\u00e9e.",
+      subtitle: "",
       cards: [
         {
           title: "Paysages spectaculaires",
@@ -392,7 +392,7 @@ export const t = {
     highlights: {
       eyebrow: "Rallye-Highlights",
       title: "Alles wat Dir wësse musst",
-      subtitle: "All Detail bedacht, all Streck f\u00ebr hir Sch\u00e9inheet gew\u00e4elt. Den Indian Summer Rallye ass entworf fir d\u2019Autoevenement vum Joer ze sinn.",
+      subtitle: "",
       cards: [
         {
           title: "Spektakul\u00e4r Landschaften",
@@ -400,13 +400,13 @@ export const t = {
           accent: "130 km Panoramastroosse",
         },
         {
-          title: "Eendeeg-Rallye",
-          body: "E suerg\u00e4lteg ausgeschafft Programm, deen Fuertstrecken a kulturell Visiten verbënnt. Start: 10h00 \u00b7 Briefing: 10h45.",
+          title: "Eendags-Rallye",
+          body: "E suergf\u00e4lteg ausgeschaffte Programm, deen Fuertstrecken a kulturell Visitte verbënnt. Start: 10:00 \u00b7 Briefing: 10:45.",
           accent: "6. September 2026",
         },
         {
-          title: "Klassiker- a Sportwagen wëllkomm",
-          body: "Op f\u00ebr Klassiker- a Sportwagen.",
+          title: "Klassiker a Sportween wëllkomm",
+          body: "Op fir Klassiker a Sportween.",
           accent: "All Kategorien zougelooss",
         },
         {

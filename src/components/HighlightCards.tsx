@@ -24,9 +24,11 @@ export default function HighlightCards() {
           <h2 className="font-heading text-forest text-4xl sm:text-5xl font-bold tracking-[-0.02em]">
             {tr.title}
           </h2>
-          <p className="mt-4 text-warm-gray text-lg max-w-2xl mx-auto leading-relaxed">
-            {tr.subtitle}
-          </p>
+          {tr.subtitle && (
+            <p className="mt-4 text-warm-gray text-lg max-w-2xl mx-auto leading-relaxed">
+              {tr.subtitle}
+            </p>
+          )}
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
