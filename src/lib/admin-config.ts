@@ -1,18 +1,29 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const CONFIG_FILE = path.join(DATA_DIR, "admin.json");
 const TOKENS_FILE = path.join(DATA_DIR, "reset-tokens.json");
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface AdminCredential {
+  username: string;       // stored in plain (not secret)
+  passwordHash: string;   // hex-encoded scrypt output (64 bytes)
+  salt: string;           // hex-encoded random salt (32 bytes)
+}
+
 interface AdminConfig {
-  password?: string;
+  credential?: AdminCredential;
 }
 
 interface ResetToken {
   token: string;
   expiry: number; // unix ms
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function ensureDir() {
   await fs.mkdir(DATA_DIR, { recursive: true });
@@ -22,30 +33,84 @@ async function readConfig(): Promise<AdminConfig> {
   await ensureDir();
   try {
     const data = await fs.readFile(CONFIG_FILE, "utf-8");
-    return JSON.parse(data);
+    return JSON.parse(data) as AdminConfig;
   } catch {
     return {};
   }
 }
 
-export async function getPassword(): Promise<string> {
-  const cfg = await readConfig();
-  return cfg.password ?? (process.env.ADMIN_PASSWORD ?? "49%$Kick");
+async function writeConfig(cfg: AdminConfig): Promise<void> {
+  await ensureDir();
+  await fs.writeFile(CONFIG_FILE, JSON.stringify(cfg, null, 2), "utf-8");
 }
 
-export async function setPassword(newPassword: string): Promise<void> {
-  await ensureDir();
+// ─── Password hashing (scrypt, Node.js built-in) ──────────────────────────────
+// Parameters: N=16384, r=8, p=1 — OWASP-recommended minimum
+
+function scryptAsync(password: string, salt: string, keylen: number): Promise<Buffer> {
+  return new Promise((resolve, reject) =>
+    scrypt(password, salt, keylen, { N: 16384, r: 8, p: 1 }, (err, key) =>
+      err ? reject(err) : resolve(key)
+    )
+  );
+}
+
+export async function hashPassword(
+  password: string
+): Promise<{ hash: string; salt: string }> {
+  const salt = randomBytes(32).toString("hex");
+  const derived = await scryptAsync(password, salt, 64);
+  return { hash: derived.toString("hex"), salt };
+}
+
+async function verifyHash(
+  password: string,
+  storedHash: string,
+  salt: string
+): Promise<boolean> {
+  try {
+    const derived = await scryptAsync(password, salt, 64);
+    const storedBuf = Buffer.from(storedHash, "hex");
+    if (derived.length !== storedBuf.length) return false;
+    return timingSafeEqual(derived, storedBuf);
+  } catch {
+    return false;
+  }
+}
+
+// ─── Credential management ────────────────────────────────────────────────────
+
+export async function verifyAdminCredentials(
+  username: string,
+  password: string
+): Promise<boolean> {
   const cfg = await readConfig();
-  cfg.password = newPassword;
-  await fs.writeFile(CONFIG_FILE, JSON.stringify(cfg, null, 2), "utf-8");
+  if (!cfg.credential) return false;
+  if (cfg.credential.username !== username) return false;
+  return verifyHash(password, cfg.credential.passwordHash, cfg.credential.salt);
+}
+
+export async function setAdminCredentials(
+  username: string,
+  password: string
+): Promise<void> {
+  const { hash, salt } = await hashPassword(password);
+  const cfg = await readConfig();
+  cfg.credential = { username, passwordHash: hash, salt };
+  await writeConfig(cfg);
+}
+
+/** Only changes password, keeps username */
+export async function setPassword(newPassword: string): Promise<void> {
+  const cfg = await readConfig();
+  const username = cfg.credential?.username ?? "sincero";
+  await setAdminCredentials(username, newPassword);
 }
 
 // ─── Reset tokens ─────────────────────────────────────────────────────────────
 
 function generateToken(): string {
-  const arr = new Uint8Array(32);
-  crypto.getRandomValues(arr);
-  return Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return randomBytes(32).toString("hex");
 }
 
 async function readTokens(): Promise<ResetToken[]> {
@@ -53,7 +118,6 @@ async function readTokens(): Promise<ResetToken[]> {
   try {
     const data = await fs.readFile(TOKENS_FILE, "utf-8");
     const all: ResetToken[] = JSON.parse(data);
-    // purge expired
     return all.filter((t) => t.expiry > Date.now());
   } catch {
     return [];

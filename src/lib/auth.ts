@@ -59,10 +59,7 @@ export async function verifyToken(token: string): Promise<string | null> {
   }
 }
 
-// Note: async because password may be stored in data/admin.json (reset by user)
 export async function verifyCredentials(username: string, password: string): Promise<boolean> {
-  const { getPassword } = await import("./admin-config");
-  const u = process.env.ADMIN_USERNAME ?? "sincero";
-  const p = await getPassword();
-  return username === u && password === p;
+  const { verifyAdminCredentials } = await import("./admin-config");
+  return verifyAdminCredentials(username, password);
 }
