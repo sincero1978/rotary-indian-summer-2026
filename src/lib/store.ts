@@ -1,27 +1,11 @@
 import { promises as fs } from "fs";
 import path from "path";
+import type { StoredRegistration } from "./admin-types";
+
+export type { StoredRegistration };
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const FILE = path.join(DATA_DIR, "registrations.json");
-
-export interface StoredRegistration {
-  id: string;
-  reference: string;
-  submittedAt: string;
-  driverName: string;
-  copilotName: string;
-  email: string;
-  phone: string;
-  carMake: string;
-  carModel: string;
-  carYear: string;
-  extraParticipants: number;
-  extraNames: string[];
-  mealChoices: Array<{ include: boolean; menu: string }>;
-  mealCost: number;
-  total: number;
-  lang: string;
-}
 
 async function ensureDir(): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });

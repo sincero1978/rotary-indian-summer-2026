@@ -4,8 +4,9 @@ import { verifyToken } from "@/lib/auth";
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow login page through
-  if (pathname === "/admin/login" || pathname.startsWith("/admin/login/")) {
+  // Allow public admin pages through
+  const publicAdminPaths = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
+  if (publicAdminPaths.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return NextResponse.next();
   }
 

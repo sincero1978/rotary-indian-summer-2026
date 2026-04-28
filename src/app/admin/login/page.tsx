@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Lock, User, AlertCircle, Loader2 } from "lucide-react";
 
 export default function AdminLogin() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,8 +26,8 @@ export default function AdminLogin() {
         setError(data.error ?? "Invalid credentials");
         return;
       }
-      router.push("/admin");
-      router.refresh();
+      // Hard navigate so the browser includes the freshly-set cookie
+      window.location.href = "/admin";
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -123,6 +122,13 @@ export default function AdminLogin() {
               "Sign In"
             )}
           </button>
+
+          <div className="text-center pt-1">
+            <Link href="/admin/forgot-password"
+              className="text-white/40 text-xs hover:text-white/70 transition-colors duration-200">
+              Forgot password?
+            </Link>
+          </div>
         </form>
 
         <p className="text-center text-white/25 text-xs mt-6">

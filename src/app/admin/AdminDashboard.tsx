@@ -7,7 +7,7 @@ import {
   LogOut, Plus, Trash2, X, Users, Euro, UtensilsCrossed,
   Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronUp,
 } from "lucide-react";
-import { StoredRegistration } from "@/lib/store";
+import type { StoredRegistration } from "@/lib/admin-types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
