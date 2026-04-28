@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
+import { appendOne } from "@/lib/store";
+import { randomUUID } from "crypto";
 
 const SENDER = '"Rotary Indian Summer Tour 2026" <rotarybascharagekordall@gmail.com>';
 const ORGANISER_RECIPIENTS = ["Rist2026@hotmail.com", "rotarybascharagekordall@gmail.com"];
@@ -495,6 +497,26 @@ export async function POST(req: NextRequest) {
           buildDriverHtml(body, reference, lang)
         ),
       },
+    });
+
+    // Persist registration to local store for admin panel
+    await appendOne({
+      id: randomUUID(),
+      reference,
+      submittedAt: new Date().toISOString(),
+      driverName: body.driverName,
+      copilotName: body.copilotName,
+      email: body.email,
+      phone: body.phone,
+      carMake: body.carMake,
+      carModel: body.carModel,
+      carYear: body.carYear,
+      extraParticipants: Number(body.extraParticipants) || 0,
+      extraNames: body.extraNames ?? [],
+      mealChoices: body.mealChoices ?? [],
+      mealCost: Number(body.mealCost) || 0,
+      total: Number(body.total) || 0,
+      lang,
     });
 
     return NextResponse.json({ reference });

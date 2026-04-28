@@ -20,9 +20,9 @@ export default function Footer() {
   return (
     <footer id="contact" className="bg-[#1a2e24] text-white">
       <div className="border-b border-white/8 py-16">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 grid md:grid-cols-4 gap-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 grid md:grid-cols-5 gap-12">
           {/* Brand */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 lg:col-span-2">
             <div className="mb-5">
               <Image
                 src="/rally-logo.png"
@@ -75,6 +75,19 @@ export default function Footer() {
                 Restaurant Threeland<br />
                 50 Rue Pierre Hamer<br />
                 4737 Pétange
+              </li>
+            </ul>
+          </div>
+
+          {/* Staff */}
+          <div>
+            <h4 className="text-white/80 text-xs font-semibold tracking-[0.22em] uppercase mb-5">Staff</h4>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/admin/login"
+                  className="text-white/50 text-sm hover:text-sage transition-colors duration-200 focus-visible:outline-none focus-visible:text-sage">
+                  Staff Login
+                </Link>
               </li>
             </ul>
           </div>
