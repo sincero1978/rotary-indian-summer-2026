@@ -59,7 +59,4 @@ export async function verifyToken(token: string): Promise<string | null> {
   }
 }
 
-export async function verifyCredentials(username: string, password: string): Promise<boolean> {
-  const { verifyAdminCredentials } = await import("./admin-config");
-  return verifyAdminCredentials(username, password);
-}
+export { verifyAdminCredentials as verifyCredentials } from "./admin-config";
