@@ -65,7 +65,7 @@ export default function AdminLogin() {
             alt="Rotary Indian Summer Tour 2026"
             width={1184}
             height={621}
-            className="w-44 h-auto mx-auto mb-7 drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+            className="w-[352px] h-auto mx-auto mb-7 drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
           />
           <div className="flex items-center justify-center gap-2.5 mb-2">
             <div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center">
