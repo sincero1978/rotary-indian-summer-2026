@@ -16,7 +16,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
     }
 
-    await setPassword(password);
+    // Reset the primary admin account (env var username, or default)
+    const primaryUser = process.env.ADMIN_USERNAME ?? "sincero";
+    await setPassword(primaryUser, password);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("Reset password error:", err);

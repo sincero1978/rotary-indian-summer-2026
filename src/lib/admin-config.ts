@@ -9,6 +9,8 @@ interface AdminCredential {
   salt: string;         // hex-encoded random salt (32 bytes)
 }
 
+type AdminUsers = Record<string, AdminCredential>;
+
 // ─── scrypt helper ────────────────────────────────────────────────────────────
 
 function scryptAsync(password: string, salt: string, keylen: number): Promise<Buffer> {
@@ -42,9 +44,12 @@ async function verifyHash(
   }
 }
 
-// ─── Redis credential storage ─────────────────────────────────────────────────
+// ─── Redis user storage ───────────────────────────────────────────────────────
+// Stores all admin users as { [username]: AdminCredential } under one key.
+// Migrates automatically from the legacy single-credential key on first read.
 
-const ADMIN_CRED_KEY = "rist:admin:credentials";
+const ADMIN_USERS_KEY  = "rist:admin:users";
+const LEGACY_CRED_KEY  = "rist:admin:credentials"; // pre-multi-user key
 
 function isRedisAvailable(): boolean {
   return !!process.env.REDIS_URL;
@@ -61,23 +66,33 @@ async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Pro
   }
 }
 
-async function redisGetCredential(): Promise<AdminCredential | null> {
+async function redisGetUsers(): Promise<AdminUsers> {
   try {
     return withRedis(async (client) => {
-      const raw = await client.get(ADMIN_CRED_KEY);
-      if (!raw) return null;
-      const cred = JSON.parse(raw) as AdminCredential;
-      if (!cred?.passwordHash) return null;
-      return cred;
+      const raw = await client.get(ADMIN_USERS_KEY);
+      if (raw) return JSON.parse(raw) as AdminUsers;
+
+      // One-time migration from legacy single-credential key
+      const legacyRaw = await client.get(LEGACY_CRED_KEY);
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw) as AdminCredential;
+        if (legacy?.username && legacy?.passwordHash) {
+          const users: AdminUsers = { [legacy.username]: legacy };
+          await client.set(ADMIN_USERS_KEY, JSON.stringify(users));
+          return users;
+        }
+      }
+
+      return {};
     });
   } catch {
-    return null;
+    return {};
   }
 }
 
-async function redisSaveCredential(cred: AdminCredential): Promise<void> {
+async function redisSaveUsers(users: AdminUsers): Promise<void> {
   await withRedis(async (client) => {
-    await client.set(ADMIN_CRED_KEY, JSON.stringify(cred));
+    await client.set(ADMIN_USERS_KEY, JSON.stringify(users));
   });
 }
 
@@ -88,17 +103,19 @@ function getAdminDataDir(): string {
   return require("path").join(process.cwd(), "data");
 }
 
-async function fileGetCredential(): Promise<AdminCredential | null> {
+async function fileGetCredential(username?: string): Promise<AdminCredential | null> {
   try {
     const { promises: fs } = await import("fs");
     const file = require("path").join(getAdminDataDir(), "admin.json");
     const raw = await fs.readFile(file, "utf-8");
     const cfg = JSON.parse(raw);
-    if (cfg?.credential?.passwordHash) return cfg.credential as AdminCredential;
+    const cred = cfg?.credential as AdminCredential | undefined;
+    if (!cred?.passwordHash) return null;
+    if (username && cred.username !== username) return null;
+    return cred;
   } catch {
-    // file doesn't exist yet
+    return null;
   }
-  return null;
 }
 
 async function fileSaveCredential(cred: AdminCredential): Promise<void> {
@@ -115,63 +132,55 @@ async function fileSaveCredential(cred: AdminCredential): Promise<void> {
   }
 }
 
-// ─── Credential resolution ────────────────────────────────────────────────────
-// Priority: Redis → env vars → file (local dev)
-
-async function getCredential(): Promise<AdminCredential | null> {
-  // 1. Redis (primary store on Vercel — also written by change-password)
-  if (isRedisAvailable()) {
-    const redisCred = await redisGetCredential();
-    if (redisCred) return redisCred;
-  }
-
-  // 2. Environment variables (initial Vercel deploy before any password change)
-  const envHash = process.env.ADMIN_PASSWORD_HASH;
-  const envSalt = process.env.ADMIN_PASSWORD_SALT;
-  const envUser = process.env.ADMIN_USERNAME;
-  if (envHash && envSalt && envUser) {
-    return { username: envUser, passwordHash: envHash, salt: envSalt };
-  }
-
-  // 3. File (local dev only)
-  return fileGetCredential();
-}
-
-async function saveCredential(cred: AdminCredential): Promise<void> {
-  if (isRedisAvailable()) {
-    await redisSaveCredential(cred);
-  } else {
-    await fileSaveCredential(cred);
-  }
-}
-
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export async function verifyAdminCredentials(
   username: string,
   password: string
 ): Promise<boolean> {
-  const cred = await getCredential();
-  if (!cred) {
-    console.error("[admin] No credentials configured. Set ADMIN_USERNAME, ADMIN_PASSWORD_HASH, ADMIN_PASSWORD_SALT env vars.");
-    return false;
+  // 1. Redis users map (primary)
+  if (isRedisAvailable()) {
+    const users = await redisGetUsers();
+    const cred = users[username];
+    if (cred) return verifyHash(password, cred.passwordHash, cred.salt);
+    // No entry in Redis for this user — fall through to env vars / file
   }
-  if (cred.username !== username) return false;
-  return verifyHash(password, cred.passwordHash, cred.salt);
+
+  // 2. Env vars (initial Vercel deploy, single admin, before any password change)
+  const envUser = process.env.ADMIN_USERNAME;
+  const envHash = process.env.ADMIN_PASSWORD_HASH;
+  const envSalt = process.env.ADMIN_PASSWORD_SALT;
+  if (envUser && envHash && envSalt && envUser === username) {
+    return verifyHash(password, envHash, envSalt);
+  }
+
+  // 3. File (local dev)
+  const fileCred = await fileGetCredential(username);
+  if (fileCred) return verifyHash(password, fileCred.passwordHash, fileCred.salt);
+
+  console.error(`[admin] No credentials found for user "${username}".`);
+  return false;
 }
 
+/** Create or update a user's password. Scrypt-hashes with a fresh random salt. */
 export async function setAdminCredentials(
   username: string,
   password: string
 ): Promise<void> {
   const { hash, salt } = await hashPassword(password);
-  await saveCredential({ username, passwordHash: hash, salt });
+  const cred: AdminCredential = { username, passwordHash: hash, salt };
+
+  if (isRedisAvailable()) {
+    const users = await redisGetUsers();
+    users[username] = cred;
+    await redisSaveUsers(users);
+  } else {
+    await fileSaveCredential(cred);
+  }
 }
 
-/** Changes password, keeps current username */
-export async function setPassword(newPassword: string): Promise<void> {
-  const cred = await getCredential();
-  const username = cred?.username ?? process.env.ADMIN_USERNAME ?? "sincero";
+/** Change the password for an existing user (keeps username). */
+export async function setPassword(username: string, newPassword: string): Promise<void> {
   await setAdminCredentials(username, newPassword);
 }
 

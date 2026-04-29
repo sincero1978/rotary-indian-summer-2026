@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   LogOut, Plus, Trash2, X, Users, Euro, UtensilsCrossed,
   Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronUp, RefreshCw,
-  KeyRound, Eye, EyeOff,
+  KeyRound, Eye, EyeOff, Printer,
 } from "lucide-react";
 import type { StoredRegistration } from "@/lib/admin-types";
 
@@ -456,6 +456,128 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ─── Print helper ─────────────────────────────────────────────────────────────
+
+function printRegistrations(regs: StoredRegistration[]) {
+  const MENU_NAMES: Record<string, string> = {
+    "1": "Menu 1 — Wiener Schnitzel",
+    "2": "Menu 2 — Cannelloni Bolognese",
+    "3": "Menu 3 — Vegetarian Cannelloni",
+  };
+
+  const totalRevenue = regs.reduce((s, r) => s + r.total, 0);
+  const totalMeals   = regs.reduce((s, r) => s + r.mealChoices.filter((m) => m.include).length, 0);
+  const totalPeople  = regs.reduce((s, r) => s + 2 + r.extraParticipants, 0);
+
+  const rows = regs.map((r, i) => {
+    const meals = r.mealChoices
+      .map((m, mi) => {
+        if (!m.include) return null;
+        const name = mi === 0 ? r.driverName : mi === 1 ? r.copilotName : r.extraNames[mi - 2] ?? `P${mi + 1}`;
+        return `${name}: ${MENU_NAMES[m.menu] ?? m.menu}`;
+      })
+      .filter(Boolean)
+      .join("<br>");
+
+    const participants = [r.driverName, r.copilotName, ...r.extraNames].join(", ");
+
+    return `
+      <tr class="${i % 2 === 0 ? "even" : ""}">
+        <td class="ref">${r.reference}</td>
+        <td>${new Date(r.submittedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</td>
+        <td>${participants}</td>
+        <td>${r.email}<br><span class="sub">${r.phone}</span></td>
+        <td>${r.carMake} ${r.carModel}<br><span class="sub">${r.carYear}</span></td>
+        <td class="center">${meals || '<span class="none">—</span>'}</td>
+        <td class="center amount">€${r.total}</td>
+      </tr>`;
+  }).join("");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>RIST 2026 — Registrations</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #1a1a1a; background: white; }
+
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 3px solid #2D6A4F; }
+    .header-left h1 { font-size: 18px; font-weight: bold; color: #2D6A4F; }
+    .header-left p { font-size: 11px; color: #666; margin-top: 3px; }
+    .header-right { text-align: right; font-size: 10px; color: #888; }
+
+    .stats { display: flex; gap: 0; border-bottom: 1px solid #ddd; }
+    .stat { flex: 1; padding: 10px 24px; border-right: 1px solid #ddd; }
+    .stat:last-child { border-right: none; }
+    .stat-value { font-size: 20px; font-weight: bold; color: #2D6A4F; line-height: 1; }
+    .stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-top: 2px; }
+
+    .table-wrap { padding: 16px 24px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: #2D6A4F; }
+    thead th { padding: 7px 8px; text-align: left; color: white; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid #eee; }
+    tbody tr.even { background: #f8fcf9; }
+    tbody td { padding: 6px 8px; vertical-align: top; line-height: 1.4; }
+    .ref { font-family: monospace; font-size: 10px; color: #2D6A4F; font-weight: bold; white-space: nowrap; }
+    .sub { color: #888; font-size: 10px; }
+    .center { text-align: center; }
+    .amount { font-weight: bold; white-space: nowrap; }
+    .none { color: #bbb; }
+
+    .footer { margin: 16px 24px 0; padding: 12px 0; border-top: 1px solid #ddd; display: flex; justify-content: space-between; font-size: 9px; color: #aaa; }
+
+    @page { size: A4 landscape; margin: 10mm; }
+    @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <h1>Rotary Indian Summer Tour 2026</h1>
+      <p>Staff Portal — Registration List</p>
+    </div>
+    <div class="header-right">
+      Printed ${new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}<br>
+      Rotary Club Bascharage-Kordall
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-value">${regs.length}</div><div class="stat-label">Registrations</div></div>
+    <div class="stat"><div class="stat-value">${totalPeople}</div><div class="stat-label">Participants</div></div>
+    <div class="stat"><div class="stat-value">${totalMeals}</div><div class="stat-label">Meals ordered</div></div>
+    <div class="stat"><div class="stat-value">€${totalRevenue}</div><div class="stat-label">Total revenue</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Reference</th><th>Date</th><th>Participants</th><th>Contact</th>
+          <th>Vehicle</th><th>Meals</th><th>Total</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <span>${regs.length} registration${regs.length !== 1 ? "s" : ""} · Sunday 6 September 2026 · Mess-Café, Reckange-sur-Mess</span>
+    <span>Am Déngscht vun deenen aneren</span>
+  </div>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank", "width=1100,height=750");
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  win.print();
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard({
@@ -675,6 +797,19 @@ export default function AdminDashboard({
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Print button */}
+        {regs.length > 0 && (
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={() => printRegistrations(regs)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/20 text-white/60 text-sm hover:bg-white/8 hover:text-white transition-colors duration-200"
+            >
+              <Printer size={15} />
+              Print Registration List
+            </button>
           </div>
         )}
       </main>

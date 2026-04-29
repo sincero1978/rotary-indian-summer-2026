@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // setPassword re-hashes with scrypt (N=16384) + fresh random salt and saves to Redis
-    await setPassword(newPassword);
+    await setPassword(username, newPassword);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[change-password]", err);
