@@ -6,8 +6,12 @@ import { useRouter } from "next/navigation";
 import {
   LogOut, Plus, Trash2, X, Users, Euro, UtensilsCrossed,
   Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronUp, RefreshCw,
-  KeyRound, Eye, EyeOff, Printer,
+  KeyRound, Eye, EyeOff, Printer, BarChart2,
 } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 import type { StoredRegistration } from "@/lib/admin-types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -456,6 +460,190 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ─── Charts ───────────────────────────────────────────────────────────────────
+
+type TimePeriod = "day" | "week" | "month";
+
+const CHART_COLORS = {
+  teamEntry: "#52B788",   // sage
+  meals:     "#95D5B2",   // lighter sage
+  menu1:     "#52B788",
+  menu2:     "#74C69D",
+  menu3:     "#40916C",
+  bar:       "#52B788",
+};
+
+const MENU_NAMES: Record<string, string> = {
+  "1": "Wiener Schnitzel",
+  "2": "Cannelloni Bolognese",
+  "3": "Vegetarian Cannelloni",
+};
+
+function getWeekLabel(date: Date): string {
+  // ISO week number
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `W${weekNo}`;
+}
+
+function buildTimeData(regs: StoredRegistration[], period: TimePeriod) {
+  const counts: Record<string, number> = {};
+  for (const r of regs) {
+    const d = new Date(r.submittedAt);
+    let key: string;
+    if (period === "day") {
+      key = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+    } else if (period === "week") {
+      key = getWeekLabel(d);
+    } else {
+      key = d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+    }
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  return Object.entries(counts).map(([label, count]) => ({ label, count }));
+}
+
+function buildRevenueData(regs: StoredRegistration[]) {
+  const teamTotal = regs.length * 125;
+  const mealTotal = regs.reduce((s, r) => s + r.mealChoices.filter((m) => m.include).length * 35, 0);
+  return [
+    { name: "Team Entry", value: teamTotal },
+    { name: "Meals", value: mealTotal },
+  ].filter((d) => d.value > 0);
+}
+
+function buildMenuData(regs: StoredRegistration[]) {
+  const counts: Record<string, number> = {};
+  for (const r of regs) {
+    for (const m of r.mealChoices) {
+      if (m.include) counts[m.menu] = (counts[m.menu] ?? 0) + 1;
+    }
+  }
+  return Object.entries(counts)
+    .filter(([, v]) => v > 0)
+    .map(([key, count]) => ({ name: MENU_NAMES[key] ?? `Menu ${key}`, count, key }));
+}
+
+const TOOLTIP_STYLE = {
+  contentStyle: { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: 12 },
+  cursor: { fill: "rgba(82,183,136,0.08)" },
+};
+const PIE_TOOLTIP_STYLE = {
+  contentStyle: { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: 12 },
+};
+
+function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
+  const [period, setPeriod] = useState<TimePeriod>("day");
+
+  const timeData    = buildTimeData(regs, period);
+  const revenueData = buildRevenueData(regs);
+  const menuData    = buildMenuData(regs);
+
+  const PIE_COLORS = ["#52B788", "#95D5B2"];
+  const BAR_COLORS = ["#52B788", "#74C69D", "#40916C"];
+
+  const hasTimeData    = timeData.length > 0;
+  const hasRevenueData = revenueData.length > 0;
+  const hasMenuData    = menuData.length > 0;
+
+  if (!hasTimeData && !hasRevenueData && !hasMenuData) return null;
+
+  return (
+    <div className="mb-8 space-y-4">
+      {/* ── Registrations over time ── */}
+      {hasTimeData && (
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <BarChart2 size={16} className="text-sage" />
+              <h3 className="text-white font-semibold text-sm">Registrations over time</h3>
+            </div>
+            <div className="flex gap-1 bg-white/5 border border-white/10 rounded-full p-0.5">
+              {(["day", "week", "month"] as TimePeriod[]).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`px-3.5 py-1 rounded-full text-xs font-semibold capitalize transition-[background-color,color] duration-200 ${
+                    period === p ? "bg-sage text-forest" : "text-white/50 hover:text-white"
+                  }`}
+                >
+                  {p === "day" ? "Daily" : p === "week" ? "Weekly" : "Monthly"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={timeData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+              <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip {...TOOLTIP_STYLE} formatter={(v) => [v, "Registrations"]} />
+              <Bar dataKey="count" fill={CHART_COLORS.bar} radius={[4, 4, 0, 0]} maxBarSize={48} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* ── Revenue + Meals row ── */}
+      {(hasRevenueData || hasMenuData) && (
+        <div className="grid sm:grid-cols-2 gap-4">
+
+          {/* Revenue pie */}
+          {hasRevenueData && (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <h3 className="text-white font-semibold text-sm mb-4">Revenue breakdown</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={revenueData}
+                    cx="50%" cy="45%"
+                    innerRadius={55} outerRadius={85}
+                    paddingAngle={3}
+                    dataKey="value"
+                    label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {revenueData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip {...PIE_TOOLTIP_STYLE} formatter={(v) => [`€${v}`, ""]} />
+                  <Legend
+                    iconType="circle" iconSize={8}
+                    formatter={(v) => <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{v}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Menus bar chart */}
+          {hasMenuData && (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <h3 className="text-white font-semibold text-sm mb-4">Meals by menu</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={menuData} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }}>
+                  <XAxis type="number" allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" width={160} tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip {...TOOLTIP_STYLE} formatter={(v) => [v, "Orders"]} />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={32}>
+                    {menuData.map((_, i) => (
+                      <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Print helper ─────────────────────────────────────────────────────────────
 
 function printRegistrations(regs: StoredRegistration[]) {
@@ -638,7 +826,7 @@ export default function AdminDashboard({
       {/* Top navbar */}
       <header className="bg-[#152619] border-b border-white/8 px-6 lg:px-10 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Image src="/rally-logo.png" alt="RIST 2026" width={1184} height={621} className="h-8 w-auto" />
+          <Image src="/rally-logo.png" alt="RIST 2026" width={1184} height={621} className="h-24 w-auto" />
           <div className="hidden sm:block h-5 w-px bg-white/20" />
           <span className="hidden sm:block text-white/50 text-xs tracking-[0.2em] uppercase">Staff Portal</span>
         </div>
@@ -699,6 +887,9 @@ export default function AdminDashboard({
             </div>
           ))}
         </div>
+
+        {/* Charts */}
+        <ChartsSection regs={regs} />
 
         {/* Table header */}
         <div className="flex items-center justify-between mb-4 gap-4">
