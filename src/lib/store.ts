@@ -4,32 +4,51 @@ import type { StoredRegistration } from "./admin-types";
 
 export type { StoredRegistration };
 
-// ─── Vercel KV store ──────────────────────────────────────────────────────────
-// Uses @vercel/kv when KV_REST_API_URL + KV_REST_API_TOKEN are set (Vercel).
-// Falls back to local file storage for development.
+// ─── Redis store (Vercel / production) ───────────────────────────────────────
+// Uses standard REDIS_URL env var. Falls back to file storage for local dev.
 
-const KV_KEY = "rist:registrations";
+const REDIS_KEY = "rist:registrations";
 
-function isKvAvailable(): boolean {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+function isRedisAvailable(): boolean {
+  return !!process.env.REDIS_URL;
 }
 
-async function kvReadAll(): Promise<StoredRegistration[]> {
-  const { kv } = await import("@vercel/kv");
-  return (await kv.get<StoredRegistration[]>(KV_KEY)) ?? [];
+async function withRedis<T>(
+  fn: (client: import("redis").RedisClientType) => Promise<T>
+): Promise<T> {
+  const { createClient } = await import("redis");
+  const client = createClient({ url: process.env.REDIS_URL });
+  client.on("error", (err) => console.error("[redis]", err));
+  await client.connect();
+  try {
+    return await fn(client as import("redis").RedisClientType);
+  } finally {
+    await client.disconnect();
+  }
 }
 
-async function kvAppendOne(reg: StoredRegistration): Promise<void> {
-  const { kv } = await import("@vercel/kv");
-  const all = await kvReadAll();
-  all.push(reg);
-  await kv.set(KV_KEY, all);
+async function redisReadAll(): Promise<StoredRegistration[]> {
+  return withRedis(async (client) => {
+    const raw = await client.get(REDIS_KEY);
+    return raw ? (JSON.parse(raw) as StoredRegistration[]) : [];
+  });
 }
 
-async function kvRemoveOne(id: string): Promise<void> {
-  const { kv } = await import("@vercel/kv");
-  const all = await kvReadAll();
-  await kv.set(KV_KEY, all.filter((r) => r.id !== id));
+async function redisAppendOne(reg: StoredRegistration): Promise<void> {
+  return withRedis(async (client) => {
+    const raw = await client.get(REDIS_KEY);
+    const all: StoredRegistration[] = raw ? JSON.parse(raw) : [];
+    all.push(reg);
+    await client.set(REDIS_KEY, JSON.stringify(all));
+  });
+}
+
+async function redisRemoveOne(id: string): Promise<void> {
+  return withRedis(async (client) => {
+    const raw = await client.get(REDIS_KEY);
+    const all: StoredRegistration[] = raw ? JSON.parse(raw) : [];
+    await client.set(REDIS_KEY, JSON.stringify(all.filter((r) => r.id !== id)));
+  });
 }
 
 // ─── File store (local dev fallback) ─────────────────────────────────────────
@@ -47,7 +66,7 @@ async function ensureDir(): Promise<void> {
   try {
     await fs.mkdir(getDataDir(), { recursive: true });
   } catch {
-    // Directory may already exist or filesystem may be read-only — fine for reads
+    // Already exists or read-only — fine for reads
   }
 }
 
@@ -76,8 +95,11 @@ async function fileRemoveOne(id: string): Promise<void> {
   try {
     await ensureDir();
     const all = await fileReadAll();
-    const filtered = all.filter((r) => r.id !== id);
-    await fs.writeFile(getFile(), JSON.stringify(filtered, null, 2), "utf-8");
+    await fs.writeFile(
+      getFile(),
+      JSON.stringify(all.filter((r) => r.id !== id), null, 2),
+      "utf-8"
+    );
   } catch (err) {
     console.error("[store] removeOne failed:", err);
   }
@@ -86,16 +108,16 @@ async function fileRemoveOne(id: string): Promise<void> {
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export async function readAll(): Promise<StoredRegistration[]> {
-  if (isKvAvailable()) return kvReadAll();
+  if (isRedisAvailable()) return redisReadAll();
   return fileReadAll();
 }
 
 export async function appendOne(reg: StoredRegistration): Promise<void> {
-  if (isKvAvailable()) return kvAppendOne(reg);
+  if (isRedisAvailable()) return redisAppendOne(reg);
   return fileAppendOne(reg);
 }
 
 export async function removeOne(id: string): Promise<void> {
-  if (isKvAvailable()) return kvRemoveOne(id);
+  if (isRedisAvailable()) return redisRemoveOne(id);
   return fileRemoveOne(id);
 }
