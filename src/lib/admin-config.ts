@@ -57,11 +57,11 @@ async function getCredential(): Promise<AdminCredential | null> {
     return { username: envUser, passwordHash: envHash, salt: envSalt };
   }
 
-  // 2. Fall back to data/admin.json (local dev)
+  // 2. Fall back to data/admin.json (local dev) or /tmp/rist-data/admin.json (Vercel)
   try {
     const { promises: fs } = await import("fs");
-    const path = await import("path");
-    const file = path.join(process.cwd(), "data", "admin.json");
+    const dataDir = getAdminDataDir();
+    const file = require("path").join(dataDir, "admin.json");
     const raw = await fs.readFile(file, "utf-8");
     const cfg = JSON.parse(raw);
     if (cfg?.credential?.passwordHash) return cfg.credential as AdminCredential;
@@ -72,18 +72,22 @@ async function getCredential(): Promise<AdminCredential | null> {
   return null;
 }
 
+function getAdminDataDir(): string {
+  if (process.env.VERCEL || process.env.VERCEL_ENV) return "/tmp/rist-data";
+  return require("path").join(process.cwd(), "data");
+}
+
 async function saveCredentialToFile(cred: AdminCredential): Promise<void> {
   try {
     const { promises: fs } = await import("fs");
-    const path = await import("path");
-    const dataDir = path.join(process.cwd(), "data");
+    const dataDir = getAdminDataDir();
     await fs.mkdir(dataDir, { recursive: true });
-    const file = path.join(dataDir, "admin.json");
+    const file = require("path").join(dataDir, "admin.json");
     const existing = JSON.parse(await fs.readFile(file, "utf-8").catch(() => "{}"));
     existing.credential = cred;
     await fs.writeFile(file, JSON.stringify(existing, null, 2), "utf-8");
   } catch (err) {
-    console.warn("[admin] Could not write admin.json (expected on Vercel):", err);
+    console.warn("[admin] Could not write admin.json:", err);
   }
 }
 
