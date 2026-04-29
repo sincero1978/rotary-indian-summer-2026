@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   LogOut, Plus, Trash2, X, Users, Euro, UtensilsCrossed,
-  Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronUp,
+  Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronUp, RefreshCw,
 } from "lucide-react";
 import type { StoredRegistration } from "@/lib/admin-types";
 
@@ -304,6 +304,17 @@ export default function AdminDashboard({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await fetch("/api/admin/registrations");
+      if (res.ok) setRegs(await res.json());
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const totalRevenue = regs.reduce((s, r) => s + r.total, 0);
   const totalMeals = regs.reduce((s, r) => s + r.mealChoices.filter((m) => m.include).length, 0);
@@ -375,12 +386,22 @@ export default function AdminDashboard({
         {/* Table header */}
         <div className="flex items-center justify-between mb-4 gap-4">
           <h2 className="font-heading text-white text-xl font-bold">Registrations</h2>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-sage text-forest font-semibold text-sm hover:bg-sage-light active:scale-[0.98] transition-[background-color,transform] duration-200 shadow-[0_4px_16px_rgba(82,183,136,0.3)]"
-          >
-            <Plus size={15} /> Add Registration
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Refresh list"
+              className="w-9 h-9 rounded-full border border-white/20 text-white/50 hover:text-white hover:bg-white/10 flex items-center justify-center disabled:opacity-40 transition-colors duration-200"
+            >
+              <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
+            </button>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-sage text-forest font-semibold text-sm hover:bg-sage-light active:scale-[0.98] transition-[background-color,transform] duration-200 shadow-[0_4px_16px_rgba(82,183,136,0.3)]"
+            >
+              <Plus size={15} /> Add Registration
+            </button>
+          </div>
         </div>
 
         {/* Table */}
