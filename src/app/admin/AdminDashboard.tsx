@@ -445,7 +445,7 @@ export default function AdminDashboard({
                 </thead>
                 <tbody className="divide-y divide-white/8">
                   {regs.map((r) => (
-                    <tr key={r.id} className="hover:bg-white/5 transition-colors group">
+                    <tr key={r.id} className="hover:bg-white/5 transition-colors">
                       <td className="px-4 py-3.5 font-mono text-sage text-xs whitespace-nowrap">{r.reference}</td>
                       <td className="px-4 py-3.5 text-white/50 text-xs whitespace-nowrap">{formatDate(r.submittedAt)}</td>
                       <td className="px-4 py-3.5">
@@ -491,7 +491,7 @@ export default function AdminDashboard({
                       </td>
                       <td className="px-4 py-3.5">
                         <button onClick={() => setDeleteId(r.id)}
-                          className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-red-400/60 hover:text-red-400 hover:bg-red-400/10 transition-[opacity,background-color,color] duration-200">
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-400/15 transition-colors duration-200">
                           <Trash2 size={13} />
                         </button>
                       </td>

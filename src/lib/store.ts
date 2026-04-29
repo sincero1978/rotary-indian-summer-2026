@@ -1,11 +1,13 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { createClient } from "redis";
 import type { StoredRegistration } from "./admin-types";
 
 export type { StoredRegistration };
 
 // ─── Redis store (Vercel / production) ───────────────────────────────────────
-// Uses standard REDIS_URL env var. Falls back to file storage for local dev.
+// Uses REDIS_URL env var set by the Vercel Redis integration.
+// Falls back to local file storage when REDIS_URL is absent (local dev).
 
 const REDIS_KEY = "rist:registrations";
 
@@ -13,24 +15,22 @@ function isRedisAvailable(): boolean {
   return !!process.env.REDIS_URL;
 }
 
-async function withRedis<T>(
-  fn: (client: import("redis").RedisClientType) => Promise<T>
-): Promise<T> {
-  const { createClient } = await import("redis");
+async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Promise<T>): Promise<T> {
   const client = createClient({ url: process.env.REDIS_URL });
   client.on("error", (err) => console.error("[redis]", err));
   await client.connect();
   try {
-    return await fn(client as import("redis").RedisClientType);
+    return await fn(client);
   } finally {
-    await client.disconnect();
+    await client.disconnect().catch(() => {});
   }
 }
 
 async function redisReadAll(): Promise<StoredRegistration[]> {
   return withRedis(async (client) => {
     const raw = await client.get(REDIS_KEY);
-    return raw ? (JSON.parse(raw) as StoredRegistration[]) : [];
+    if (!raw) return [];
+    return JSON.parse(raw) as StoredRegistration[];
   });
 }
 
