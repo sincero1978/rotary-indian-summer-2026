@@ -59,4 +59,6 @@ export async function verifyToken(token: string): Promise<string | null> {
   }
 }
 
-export { verifyAdminCredentials as verifyCredentials } from "./admin-config";
+// NOTE: verifyAdminCredentials (scrypt, fs) must be imported directly from
+// admin-config in Node.js-only route handlers — NOT here, as this file is
+// also bundled for the Edge proxy runtime which has no Node.js built-ins.

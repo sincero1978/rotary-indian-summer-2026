@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyCredentials, createToken } from "@/lib/auth";
+import { createToken } from "@/lib/auth";
+import { verifyAdminCredentials } from "@/lib/admin-config";
 
 export async function POST(req: NextRequest) {
   try {
     const { username, password } = await req.json();
-    if (!(await verifyCredentials(username ?? "", password ?? ""))) {
+    if (!(await verifyAdminCredentials(username ?? "", password ?? ""))) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
     const token = await createToken(username);
