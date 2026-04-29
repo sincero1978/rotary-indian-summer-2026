@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   LogOut, Plus, Trash2, X, Users, Euro, UtensilsCrossed,
   Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronUp, RefreshCw,
+  KeyRound, Eye, EyeOff,
 } from "lucide-react";
 import type { StoredRegistration } from "@/lib/admin-types";
 
@@ -309,6 +310,152 @@ function AddModal({ onClose, onAdd }: { onClose: () => void; onAdd: (r: StoredRe
   );
 }
 
+// ─── Change Password Modal ────────────────────────────────────────────────────
+
+function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const strength = (p: string) => {
+    if (p.length === 0) return 0;
+    let s = 0;
+    if (p.length >= 8) s++;
+    if (p.length >= 12) s++;
+    if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s++;
+    if (/\d/.test(p)) s++;
+    if (/[^A-Za-z0-9]/.test(p)) s++;
+    return s;
+  };
+  const strengthLabel = ["", "Weak", "Fair", "Good", "Strong", "Very strong"];
+  const strengthColor = ["", "bg-red-400", "bg-orange-400", "bg-yellow-400", "bg-sage", "bg-emerald-400"];
+  const s = strength(newPassword);
+
+  const handleSubmit = async () => {
+    setError("");
+    if (newPassword.length < 8) { setError("Password must be at least 8 characters"); return; }
+    if (newPassword !== confirmPassword) { setError("Passwords do not match"); return; }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword, confirmPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Failed to update password"); return; }
+      setSuccess(true);
+      setTimeout(onClose, 2000);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      <div className="relative w-full max-w-sm bg-[#1e3528] border border-white/15 rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+          <div>
+            <div className="text-sage text-xs font-semibold tracking-[0.22em] uppercase mb-0.5">Account</div>
+            <h2 className="font-heading text-white text-xl font-bold">Change Password</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {success ? (
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-sage/20 flex items-center justify-center">
+                <CheckCircle size={22} className="text-sage" />
+              </div>
+              <p className="text-white font-medium">Password updated successfully</p>
+              <p className="text-white/40 text-sm">Closing…</p>
+            </div>
+          ) : (
+            <>
+              {error && (
+                <div className="flex items-center gap-2.5 bg-red-500/10 border border-red-400/30 rounded-xl px-4 py-3 text-red-300 text-sm">
+                  <AlertCircle size={15} className="flex-shrink-0" /> {error}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-white/70 text-xs font-medium mb-1.5">New Password</label>
+                <div className="relative">
+                  <KeyRound size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+                  <input
+                    type={showNew ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Min. 8 characters"
+                    className={inputCls()}
+                    style={{ paddingLeft: "2.25rem", paddingRight: "2.5rem" }}
+                  />
+                  <button type="button" onClick={() => setShowNew((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors">
+                    {showNew ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                {newPassword.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} className={`h-1 flex-1 rounded-full transition-colors duration-300 ${i <= s ? strengthColor[s] : "bg-white/10"}`} />
+                      ))}
+                    </div>
+                    <p className="text-white/40 text-xs">{strengthLabel[s]}</p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-white/70 text-xs font-medium mb-1.5">Confirm New Password</label>
+                <div className="relative">
+                  <KeyRound size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+                    placeholder="Repeat new password"
+                    className={inputCls(confirmPassword.length > 0 && confirmPassword !== newPassword ? "mismatch" : undefined)}
+                    style={{ paddingLeft: "2.25rem", paddingRight: "2.5rem" }}
+                  />
+                  <button type="button" onClick={() => setShowConfirm((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors">
+                    {showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                {confirmPassword.length > 0 && confirmPassword !== newPassword && (
+                  <p className="mt-1 text-red-400 text-xs">Passwords do not match</p>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={onClose} className="flex-1 py-2.5 rounded-full border border-white/20 text-white/70 text-sm hover:bg-white/10 transition-colors">
+                  Cancel
+                </button>
+                <button onClick={handleSubmit} disabled={loading}
+                  className="flex-1 py-2.5 rounded-full bg-sage text-forest font-semibold text-sm hover:bg-sage-light disabled:opacity-60 transition-[background-color,opacity] duration-200 flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(82,183,136,0.3)]">
+                  {loading ? <><Loader2 size={14} className="animate-spin" /> Saving…</> : "Update Password"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard({
@@ -325,6 +472,8 @@ export default function AdminDashboard({
   const [deleting, setDeleting] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -372,17 +521,43 @@ export default function AdminDashboard({
           <span className="hidden sm:block text-white/50 text-xs tracking-[0.2em] uppercase">Staff Portal</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-sage/10 border border-sage/20 rounded-full px-3 py-1.5">
-            <div className="w-5 h-5 rounded-full bg-sage/30 flex items-center justify-center text-sage text-[10px] font-bold">
-              {username[0]?.toUpperCase()}
-            </div>
-            <span className="text-sage text-xs font-medium">{username}</span>
+          {/* User badge with dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu((v) => !v)}
+              className="flex items-center gap-2 bg-sage/10 border border-sage/20 rounded-full px-3 py-1.5 hover:bg-sage/15 transition-colors"
+            >
+              <div className="w-5 h-5 rounded-full bg-sage/30 flex items-center justify-center text-sage text-[10px] font-bold">
+                {username[0]?.toUpperCase()}
+              </div>
+              <span className="text-sage text-xs font-medium">{username}</span>
+              <ChevronDown size={11} className={`text-sage/60 transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""}`} />
+            </button>
+            {showUserMenu && (
+              <>
+                {/* backdrop to close on outside click */}
+                <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
+                <div className="absolute right-0 top-full mt-2 w-44 bg-[#1e3528] border border-white/15 rounded-xl shadow-2xl overflow-hidden z-20">
+                  <button
+                    onClick={() => { setShowChangePassword(true); setShowUserMenu(false); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-white/70 text-sm hover:bg-white/8 hover:text-white transition-colors"
+                  >
+                    <KeyRound size={14} className="text-sage/70" />
+                    Change Password
+                  </button>
+                  <div className="border-t border-white/8" />
+                  <button
+                    onClick={handleLogout}
+                    disabled={logoutLoading}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-white/50 text-sm hover:bg-white/8 hover:text-white/80 transition-colors disabled:opacity-40"
+                  >
+                    <LogOut size={14} />
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          <button onClick={handleLogout} disabled={logoutLoading}
-            className="flex items-center gap-1.5 text-white/40 hover:text-white/80 text-xs transition-colors disabled:opacity-50">
-            <LogOut size={14} />
-            <span className="hidden sm:inline">Sign out</span>
-          </button>
         </div>
       </header>
 
@@ -503,6 +678,11 @@ export default function AdminDashboard({
           </div>
         )}
       </main>
+
+      {/* Change password modal */}
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+      )}
 
       {/* Add modal */}
       {showAdd && (

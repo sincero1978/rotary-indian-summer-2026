@@ -1,4 +1,5 @@
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { createClient } from "redis";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -6,11 +7,6 @@ interface AdminCredential {
   username: string;
   passwordHash: string; // hex-encoded scrypt output (64 bytes)
   salt: string;         // hex-encoded random salt (32 bytes)
-}
-
-interface ResetToken {
-  token: string;
-  expiry: number; // unix ms
 }
 
 // ─── scrypt helper ────────────────────────────────────────────────────────────
@@ -46,38 +42,66 @@ async function verifyHash(
   }
 }
 
-// ─── Credential storage (env-first, file fallback for local dev) ──────────────
+// ─── Redis credential storage ─────────────────────────────────────────────────
 
-async function getCredential(): Promise<AdminCredential | null> {
-  // 1. Prefer environment variables (Vercel / any 12-factor deployment)
-  const envHash = process.env.ADMIN_PASSWORD_HASH;
-  const envSalt = process.env.ADMIN_PASSWORD_SALT;
-  const envUser = process.env.ADMIN_USERNAME;
-  if (envHash && envSalt && envUser) {
-    return { username: envUser, passwordHash: envHash, salt: envSalt };
-  }
+const ADMIN_CRED_KEY = "rist:admin:credentials";
 
-  // 2. Fall back to data/admin.json (local dev) or /tmp/rist-data/admin.json (Vercel)
-  try {
-    const { promises: fs } = await import("fs");
-    const dataDir = getAdminDataDir();
-    const file = require("path").join(dataDir, "admin.json");
-    const raw = await fs.readFile(file, "utf-8");
-    const cfg = JSON.parse(raw);
-    if (cfg?.credential?.passwordHash) return cfg.credential as AdminCredential;
-  } catch {
-    // file doesn't exist yet
-  }
-
-  return null;
+function isRedisAvailable(): boolean {
+  return !!process.env.REDIS_URL;
 }
+
+async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Promise<T>): Promise<T> {
+  const client = createClient({ url: process.env.REDIS_URL });
+  client.on("error", (err) => console.error("[admin-redis]", err));
+  await client.connect();
+  try {
+    return await fn(client);
+  } finally {
+    await client.disconnect().catch(() => {});
+  }
+}
+
+async function redisGetCredential(): Promise<AdminCredential | null> {
+  try {
+    return withRedis(async (client) => {
+      const raw = await client.get(ADMIN_CRED_KEY);
+      if (!raw) return null;
+      const cred = JSON.parse(raw) as AdminCredential;
+      if (!cred?.passwordHash) return null;
+      return cred;
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function redisSaveCredential(cred: AdminCredential): Promise<void> {
+  await withRedis(async (client) => {
+    await client.set(ADMIN_CRED_KEY, JSON.stringify(cred));
+  });
+}
+
+// ─── File credential storage (local dev fallback) ────────────────────────────
 
 function getAdminDataDir(): string {
   if (process.env.VERCEL || process.env.VERCEL_ENV) return "/tmp/rist-data";
   return require("path").join(process.cwd(), "data");
 }
 
-async function saveCredentialToFile(cred: AdminCredential): Promise<void> {
+async function fileGetCredential(): Promise<AdminCredential | null> {
+  try {
+    const { promises: fs } = await import("fs");
+    const file = require("path").join(getAdminDataDir(), "admin.json");
+    const raw = await fs.readFile(file, "utf-8");
+    const cfg = JSON.parse(raw);
+    if (cfg?.credential?.passwordHash) return cfg.credential as AdminCredential;
+  } catch {
+    // file doesn't exist yet
+  }
+  return null;
+}
+
+async function fileSaveCredential(cred: AdminCredential): Promise<void> {
   try {
     const { promises: fs } = await import("fs");
     const dataDir = getAdminDataDir();
@@ -88,6 +112,36 @@ async function saveCredentialToFile(cred: AdminCredential): Promise<void> {
     await fs.writeFile(file, JSON.stringify(existing, null, 2), "utf-8");
   } catch (err) {
     console.warn("[admin] Could not write admin.json:", err);
+  }
+}
+
+// ─── Credential resolution ────────────────────────────────────────────────────
+// Priority: Redis → env vars → file (local dev)
+
+async function getCredential(): Promise<AdminCredential | null> {
+  // 1. Redis (primary store on Vercel — also written by change-password)
+  if (isRedisAvailable()) {
+    const redisCred = await redisGetCredential();
+    if (redisCred) return redisCred;
+  }
+
+  // 2. Environment variables (initial Vercel deploy before any password change)
+  const envHash = process.env.ADMIN_PASSWORD_HASH;
+  const envSalt = process.env.ADMIN_PASSWORD_SALT;
+  const envUser = process.env.ADMIN_USERNAME;
+  if (envHash && envSalt && envUser) {
+    return { username: envUser, passwordHash: envHash, salt: envSalt };
+  }
+
+  // 3. File (local dev only)
+  return fileGetCredential();
+}
+
+async function saveCredential(cred: AdminCredential): Promise<void> {
+  if (isRedisAvailable()) {
+    await redisSaveCredential(cred);
+  } else {
+    await fileSaveCredential(cred);
   }
 }
 
@@ -111,19 +165,17 @@ export async function setAdminCredentials(
   password: string
 ): Promise<void> {
   const { hash, salt } = await hashPassword(password);
-  await saveCredentialToFile({ username, passwordHash: hash, salt });
+  await saveCredential({ username, passwordHash: hash, salt });
 }
 
-/** Only changes password, keeps username */
+/** Changes password, keeps current username */
 export async function setPassword(newPassword: string): Promise<void> {
   const cred = await getCredential();
   const username = cred?.username ?? process.env.ADMIN_USERNAME ?? "sincero";
   await setAdminCredentials(username, newPassword);
 }
 
-// ─── Reset tokens (signed, no persistence needed) ────────────────────────────
-// On Vercel the filesystem is ephemeral, so we use HMAC-signed tokens
-// instead of storing them in a file. The token embeds its own expiry.
+// ─── Reset tokens (HMAC-signed, no persistence needed) ───────────────────────
 
 async function getTokenKey(): Promise<CryptoKey> {
   const secret = process.env.ADMIN_SECRET ?? "rotary-rist-2026-fallback-secret";
