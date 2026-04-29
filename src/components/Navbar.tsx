@@ -38,10 +38,10 @@ export default function Navbar() {
         {/* Logo — smaller on mobile so it doesn't collide with right-side controls */}
         <Link href="#" className="flex items-center group flex-shrink-0">
           <Image
-            src="/rally-logo.png"
-            alt="Rotary Indian Summer Tour 2026"
-            width={1184}
-            height={621}
+            src="/rc-bascharage-kordall.webp"
+            alt="Rotary Club Bascharage-Kordall"
+            width={360}
+            height={200}
             className="h-14 sm:h-24 w-auto object-contain opacity-95 transition-opacity duration-200 group-hover:opacity-100"
             priority
           />
