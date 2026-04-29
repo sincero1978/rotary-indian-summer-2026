@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const reg: StoredRegistration = {
     id: randomUUID(),
-    reference: makeReference(),
+    reference: body.reference?.trim() || makeReference(),
     submittedAt: new Date().toISOString(),
     driverName: body.driverName ?? "",
     copilotName: body.copilotName ?? "",

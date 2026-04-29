@@ -51,6 +51,7 @@ function AddModal({ onClose, onAdd }: { onClose: () => void; onAdd: (r: StoredRe
     driverName: "", copilotName: "", email: "", phone: "",
     carMake: "", carModel: "", carYear: "", lang: "en",
   });
+  const [reference, setReference] = useState("");
   const [extras, setExtras] = useState(0);
   const [extraNames, setExtraNames] = useState<string[]>([]);
   const [mealChoices, setMealChoices] = useState<MealChoice[]>([
@@ -99,6 +100,7 @@ function AddModal({ onClose, onAdd }: { onClose: () => void; onAdd: (r: StoredRe
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
+    if (!reference.trim()) e.reference = "Required";
     if (!form.driverName.trim()) e.driverName = "Required";
     if (!form.copilotName.trim()) e.copilotName = "Required";
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Valid email required";
@@ -120,7 +122,7 @@ function AddModal({ onClose, onAdd }: { onClose: () => void; onAdd: (r: StoredRe
       const res = await fetch("/api/admin/registrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, extraParticipants: extras, extraNames, mealChoices: syncedMeals, mealCost, total }),
+        body: JSON.stringify({ ...form, reference: reference.trim(), extraParticipants: extras, extraNames, mealChoices: syncedMeals, mealCost, total }),
       });
       if (!res.ok) throw new Error("Failed to save");
       const newReg = await res.json();
@@ -153,6 +155,24 @@ function AddModal({ onClose, onAdd }: { onClose: () => void; onAdd: (r: StoredRe
               <AlertCircle size={15} className="flex-shrink-0" /> {submitError}
             </div>
           )}
+
+          {/* Reference */}
+          <section>
+            <h3 className="text-white/70 text-xs font-semibold tracking-[0.2em] uppercase mb-3">Reference</h3>
+            <div>
+              <input
+                type="text"
+                placeholder="e.g. RIST-2026-XXXXXX"
+                value={reference}
+                onChange={(e) => {
+                  setReference(e.target.value.toUpperCase());
+                  setErrors((prev) => { const n = { ...prev }; delete n.reference; return n; });
+                }}
+                className={inputCls(errors.reference)}
+              />
+              {errors.reference && <p className="mt-1 text-red-400 text-xs">{errors.reference}</p>}
+            </div>
+          </section>
 
           {/* Team Info */}
           <section>
