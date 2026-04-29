@@ -193,7 +193,7 @@ interface RegistrationPayload {
 function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr" | "lu"): string {
   const s = emailStrings[lang];
   const menus = MENUS[lang];
-  const participants = [data.driverName, data.copilotName, ...data.extraNames];
+  const participants = [data.driverName, data.copilotName, ...data.extraNames].map(esc);
   const extraPersonCost = data.extraParticipants * 20;
 
   const mealRows = data.mealChoices.map((m, i) => `
@@ -225,27 +225,27 @@ function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" |
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px">
             <tr style="background:#f0f7f4">
               <td style="padding:8px 12px;color:#555;width:40%">${s.driver}</td>
-              <td style="padding:8px 12px;font-weight:bold">${data.driverName}</td>
+              <td style="padding:8px 12px;font-weight:bold">${esc(data.driverName)}</td>
             </tr>
             <tr>
               <td style="padding:8px 12px;color:#555">${s.copilot}</td>
-              <td style="padding:8px 12px;font-weight:bold">${data.copilotName}</td>
+              <td style="padding:8px 12px;font-weight:bold">${esc(data.copilotName)}</td>
             </tr>
             <tr style="background:#f0f7f4">
               <td style="padding:8px 12px;color:#555">${s.email}</td>
-              <td style="padding:8px 12px">${data.email}</td>
+              <td style="padding:8px 12px">${esc(data.email)}</td>
             </tr>
             <tr>
               <td style="padding:8px 12px;color:#555">${s.phone}</td>
-              <td style="padding:8px 12px">${data.phone}</td>
+              <td style="padding:8px 12px">${esc(data.phone)}</td>
             </tr>
             <tr style="background:#f0f7f4">
               <td style="padding:8px 12px;color:#555">${s.vehicle}</td>
-              <td style="padding:8px 12px">${data.carMake} ${data.carModel} — ${data.carYear}</td>
+              <td style="padding:8px 12px">${esc(data.carMake)} ${esc(data.carModel)} — ${esc(data.carYear)}</td>
             </tr>
             ${data.extraParticipants > 0 ? `<tr>
               <td style="padding:8px 12px;color:#555">${s.extraParticipants}</td>
-              <td style="padding:8px 12px">${data.extraNames.join(", ")}</td>
+              <td style="padding:8px 12px">${data.extraNames.map(esc).join(", ")}</td>
             </tr>` : ""}
           </table>
 
@@ -290,7 +290,7 @@ function buildOrganiserHtml(data: RegistrationPayload, ref: string, lang: "en" |
 function buildDriverHtml(data: RegistrationPayload, ref: string, lang: "en" | "fr" | "lu"): string {
   const s = emailStrings[lang];
   const menus = MENUS[lang];
-  const participants = [data.driverName, data.copilotName, ...data.extraNames];
+  const participants = [data.driverName, data.copilotName, ...data.extraNames].map(esc);
   const extraPersonCost = data.extraParticipants * 20;
   const paymentRef = `Rotary Indian Summer ${ref}`;
 
@@ -328,27 +328,27 @@ function buildDriverHtml(data: RegistrationPayload, ref: string, lang: "en" | "f
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px">
             <tr style="background:#f0f7f4">
               <td style="padding:8px 12px;color:#555;width:40%">${s.driver}</td>
-              <td style="padding:8px 12px;font-weight:bold">${data.driverName}</td>
+              <td style="padding:8px 12px;font-weight:bold">${esc(data.driverName)}</td>
             </tr>
             <tr>
               <td style="padding:8px 12px;color:#555">${s.copilot}</td>
-              <td style="padding:8px 12px;font-weight:bold">${data.copilotName}</td>
+              <td style="padding:8px 12px;font-weight:bold">${esc(data.copilotName)}</td>
             </tr>
             <tr style="background:#f0f7f4">
               <td style="padding:8px 12px;color:#555">${s.email}</td>
-              <td style="padding:8px 12px">${data.email}</td>
+              <td style="padding:8px 12px">${esc(data.email)}</td>
             </tr>
             <tr>
               <td style="padding:8px 12px;color:#555">${s.phone}</td>
-              <td style="padding:8px 12px">${data.phone}</td>
+              <td style="padding:8px 12px">${esc(data.phone)}</td>
             </tr>
             <tr style="background:#f0f7f4">
               <td style="padding:8px 12px;color:#555">${s.vehicle}</td>
-              <td style="padding:8px 12px">${data.carMake} ${data.carModel} — ${data.carYear}</td>
+              <td style="padding:8px 12px">${esc(data.carMake)} ${esc(data.carModel)} — ${esc(data.carYear)}</td>
             </tr>
             ${data.extraParticipants > 0 ? `<tr>
               <td style="padding:8px 12px;color:#555">${s.extraParticipants}</td>
-              <td style="padding:8px 12px">${data.extraNames.join(", ")}</td>
+              <td style="padding:8px 12px">${data.extraNames.map(esc).join(", ")}</td>
             </tr>` : ""}
           </table>
 
@@ -423,20 +423,55 @@ function buildDriverHtml(data: RegistrationPayload, ref: string, lang: "en" | "f
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
+// Escape HTML special characters to prevent XSS in emails
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
+// Sanitise and truncate a free-text field
+function sanitise(val: unknown, maxLen = 120): string {
+  if (typeof val !== "string") return "";
+  return val.trim().slice(0, maxLen);
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body: RegistrationPayload = await req.json();
+    const raw = await req.json();
+
+    // Sanitise all string inputs server-side
+    const body: RegistrationPayload = {
+      ...raw,
+      driverName:  sanitise(raw.driverName),
+      copilotName: sanitise(raw.copilotName),
+      email:       sanitise(raw.email, 254),
+      phone:       sanitise(raw.phone, 30),
+      carMake:     sanitise(raw.carMake, 60),
+      carModel:    sanitise(raw.carModel, 60),
+      carYear:     sanitise(raw.carYear, 4),
+      extraNames:  Array.isArray(raw.extraNames)
+                     ? raw.extraNames.map((n: unknown) => sanitise(n))
+                     : [],
+    };
 
     if (
-      !body.driverName?.trim() ||
-      !body.copilotName?.trim() ||
-      !body.email?.trim() ||
-      !body.phone?.trim() ||
-      !body.carMake?.trim() ||
-      !body.carModel?.trim() ||
-      !body.carYear?.trim()
+      !body.driverName ||
+      !body.copilotName ||
+      !body.email ||
+      !body.phone ||
+      !body.carMake ||
+      !body.carModel ||
+      !body.carYear
     ) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+      return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
 
     const extraCount = Number(body.extraParticipants) || 0;
@@ -444,9 +479,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid number of extra participants" }, { status: 400 });
     }
 
+    // SECURITY: always recompute totals server-side — never trust client-supplied values
+    const mealChoices: MealChoice[] = Array.isArray(body.mealChoices)
+      ? body.mealChoices.slice(0, 2 + extraCount).map((m) => ({
+          include: m.include === true,
+          menu: ["1", "2", "3"].includes(String(m.menu)) ? String(m.menu) : "1",
+        }))
+      : [];
+    const mealCost  = mealChoices.filter((m) => m.include).length * 35;
+    const extraCost = extraCount * 20;
+    const total     = 125 + extraCost + mealCost;
+
     const lang: "en" | "fr" | "lu" = body.lang === "en" ? "en" : body.lang === "fr" ? "fr" : "lu";
     const s = emailStrings[lang];
     const reference = generateReference();
+
+    // Use the server-computed values for everything downstream
+    body.mealChoices = mealChoices;
+    body.mealCost    = mealCost;
+    body.total       = total;
 
     const oauth2Client = new google.auth.OAuth2(
       process.env.GMAIL_CLIENT_ID,
@@ -499,23 +550,23 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Persist registration to local store for admin panel
+    // Persist registration (use server-computed totals)
     await appendOne({
       id: randomUUID(),
       reference,
       submittedAt: new Date().toISOString(),
-      driverName: body.driverName,
+      driverName:  body.driverName,
       copilotName: body.copilotName,
-      email: body.email,
-      phone: body.phone,
-      carMake: body.carMake,
-      carModel: body.carModel,
-      carYear: body.carYear,
-      extraParticipants: Number(body.extraParticipants) || 0,
-      extraNames: body.extraNames ?? [],
-      mealChoices: body.mealChoices ?? [],
-      mealCost: Number(body.mealCost) || 0,
-      total: Number(body.total) || 0,
+      email:       body.email,
+      phone:       body.phone,
+      carMake:     body.carMake,
+      carModel:    body.carModel,
+      carYear:     body.carYear,
+      extraParticipants: extraCount,
+      extraNames:  body.extraNames ?? [],
+      mealChoices,
+      mealCost,
+      total,
       lang,
     });
 

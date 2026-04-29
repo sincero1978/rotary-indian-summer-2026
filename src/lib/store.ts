@@ -27,7 +27,8 @@ async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Pro
 }
 
 async function redisReadAll(): Promise<StoredRegistration[]> {
-  return withRedis(async (client) => {
+  // BUG FIX: was missing await — errors were silently uncaught
+  return await withRedis(async (client) => {
     const raw = await client.get(REDIS_KEY);
     if (!raw) return [];
     return JSON.parse(raw) as StoredRegistration[];

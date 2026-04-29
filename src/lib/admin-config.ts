@@ -56,8 +56,12 @@ function isRedisAvailable(): boolean {
 }
 
 async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Promise<T>): Promise<T> {
-  const client = createClient({ url: process.env.REDIS_URL });
-  client.on("error", (err) => console.error("[admin-redis]", err));
+  const url = process.env.REDIS_URL!;
+  const client = createClient({
+    url,
+    socket: { reconnectStrategy: false },
+  });
+  client.on("error", () => {}); // handled at call site
   await client.connect();
   try {
     return await fn(client);
@@ -68,7 +72,8 @@ async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Pro
 
 async function redisGetUsers(): Promise<AdminUsers> {
   try {
-    return withRedis(async (client) => {
+    // BUG FIX: was missing await — try/catch never caught connection errors
+    return await withRedis(async (client) => {
       const raw = await client.get(ADMIN_USERS_KEY);
       if (raw) return JSON.parse(raw) as AdminUsers;
 
@@ -85,7 +90,8 @@ async function redisGetUsers(): Promise<AdminUsers> {
 
       return {};
     });
-  } catch {
+  } catch (err) {
+    console.error("[admin-config] redisGetUsers failed:", err);
     return {};
   }
 }

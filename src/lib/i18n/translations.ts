@@ -73,7 +73,7 @@ export const t = {
         },
         {
           title: "Unforgettable Memories",
-          body: "Professional photographers will be on hand throughout the day to capture every moment. All participants receive access to the full event photo gallery after the rally.",
+          body: "Volunteers will be on hand throughout the day to capture every moment. All participants receive access to the full event photo gallery after the rally.",
           accent: "Full photo gallery access",
         },
       ],
@@ -247,7 +247,7 @@ export const t = {
         },
         {
           title: "Des souvenirs inoubliables",
-          body: "Des photographes professionnels seront pr\u00e9sents tout au long de la journ\u00e9e pour capturer chaque moment. Tous les participants auront acc\u00e8s \u00e0 la galerie photo compl\u00e8te apr\u00e8s le rallye.",
+          body: "Des b\u00e9n\u00e9voles seront pr\u00e9sents tout au long de la journ\u00e9e pour capturer chaque moment. Tous les participants auront acc\u00e8s \u00e0 la galerie photo compl\u00e8te apr\u00e8s le rallye.",
           accent: "Acc\u00e8s \u00e0 la galerie photo",
         },
       ],
