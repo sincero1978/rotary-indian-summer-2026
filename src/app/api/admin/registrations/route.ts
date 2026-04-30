@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { isTokenRevoked } from "@/lib/admin-config";
-import { readAll, appendOne, removeOne } from "@/lib/store";
+import { readAll, appendOne, removeOne, updateOne } from "@/lib/store";
 import type { StoredRegistration } from "@/lib/store";
 import { randomUUID } from "crypto";
 
@@ -87,6 +87,16 @@ export async function POST(req: NextRequest) {
 
   await appendOne(reg);
   return NextResponse.json(reg, { status: 201 });
+}
+
+export async function PATCH(req: NextRequest) {
+  if (!(await getAuthUser())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await req.json().catch(() => ({}));
+  const id = typeof body.id === "string" ? body.id.trim() : "";
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  if (typeof body.paid !== "boolean") return NextResponse.json({ error: "Missing paid boolean" }, { status: 400 });
+  await updateOne(id, { paid: body.paid });
+  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(req: NextRequest) {

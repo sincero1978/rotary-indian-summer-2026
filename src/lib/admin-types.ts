@@ -2,6 +2,7 @@ export interface StoredRegistration {
   id: string;
   reference: string;
   submittedAt: string;
+  paid?: boolean;
   driverName: string;
   copilotName: string;
   email: string;

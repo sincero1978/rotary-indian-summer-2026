@@ -582,16 +582,21 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
   const legendMainColor = isDark ? "rgba(255,255,255,0.8)"  : "rgba(0,0,0,0.75)";
   const legendSubColor  = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)";
 
+  const ttContent = isDark
+    ? { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: labelSz }
+    : { background: "#fff",    border: "1px solid #e5e7eb",                 borderRadius: 10, color: "#111", fontSize: labelSz };
+  const ttItem = isDark ? { color: "#fff" } : { color: "#111" };
+  const ttLabel = isDark ? { color: "rgba(255,255,255,0.7)" } : { color: "#555" };
   const tooltipStyle = {
-    contentStyle: isDark
-      ? { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: labelSz }
-      : { background: "#fff",    border: "1px solid #e5e7eb",                 borderRadius: 10, color: "#111", fontSize: labelSz },
+    contentStyle: ttContent,
+    itemStyle: ttItem,
+    labelStyle: ttLabel,
     cursor: { fill: isDark ? "rgba(82,183,136,0.08)" : "rgba(82,183,136,0.1)" },
   };
   const pieTooltipStyle = {
-    contentStyle: isDark
-      ? { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: labelSz }
-      : { background: "#fff",    border: "1px solid #e5e7eb",                 borderRadius: 10, color: "#111", fontSize: labelSz },
+    contentStyle: ttContent,
+    itemStyle: ttItem,
+    labelStyle: ttLabel,
   };
 
   const cardCls  = `border rounded-2xl p-3 sm:p-4 lg:p-5 ${t("bg-white/5 border-white/10", "bg-white border-gray-200 shadow-sm")}`;
@@ -858,6 +863,7 @@ export default function AdminDashboard({
   const [refreshing, setRefreshing]           = useState(false);
   const [showUserMenu, setShowUserMenu]       = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [paidUpdating, setPaidUpdating] = useState<Set<string>>(new Set());
 
   // ── Theme ──────────────────────────────────────────────────────────────────
   const [isDark, setIsDark] = useState(true); // default: dark
@@ -893,6 +899,27 @@ export default function AdminDashboard({
     setLogoutLoading(true);
     await fetch("/api/admin/logout", { method: "POST" });
     window.location.href = "https://www.rotary-indian-summer.lu";
+  };
+
+  const togglePaid = async (id: string, current: boolean) => {
+    setPaidUpdating((s) => new Set(s).add(id));
+    // Optimistic update
+    setRegs((prev) => prev.map((r) => r.id === id ? { ...r, paid: !current } : r));
+    try {
+      const res = await fetch("/api/admin/registrations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, paid: !current }),
+      });
+      if (!res.ok) {
+        // Revert on failure
+        setRegs((prev) => prev.map((r) => r.id === id ? { ...r, paid: current } : r));
+      }
+    } catch {
+      setRegs((prev) => prev.map((r) => r.id === id ? { ...r, paid: current } : r));
+    } finally {
+      setPaidUpdating((s) => { const n = new Set(s); n.delete(id); return n; });
+    }
   };
 
   const handleDelete = async () => {
@@ -1014,7 +1041,7 @@ export default function AdminDashboard({
               <table className="w-full min-w-[900px] text-sm">
                 <thead>
                   <tr className={`border-b ${t("border-white/10 bg-white/5", "border-gray-200 bg-gray-50")}`}>
-                    {["Reference", "Date", "Driver / Co-pilot", "Email", "Car", "Extras", "Meals", "Total", "Lang", ""].map((h) => (
+                    {["Reference", "Paid", "Date", "Driver / Co-pilot", "Email", "Car", "Extras", "Meals", "Total", "Lang", ""].map((h) => (
                       <th key={h} className={`px-3 sm:px-4 py-2.5 sm:py-3 text-left text-[10px] sm:text-xs font-semibold tracking-[0.12em] uppercase whitespace-nowrap ${t("text-white/50", "text-gray-500")}`}>
                         {h}
                       </th>
@@ -1025,6 +1052,25 @@ export default function AdminDashboard({
                   {regs.map((r) => (
                     <tr key={r.id} className={`transition-colors ${t("hover:bg-white/5", "hover:bg-gray-50")}`}>
                       <td className="px-3 sm:px-4 py-3 sm:py-3.5 font-mono text-sage text-[10px] sm:text-xs whitespace-nowrap">{r.reference}</td>
+                      <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-center">
+                        <button
+                          onClick={() => togglePaid(r.id, r.paid ?? false)}
+                          disabled={paidUpdating.has(r.id)}
+                          title={r.paid ? "Mark as unpaid" : "Mark as paid"}
+                          className="inline-flex items-center justify-center w-6 h-6 rounded-full transition-all duration-200 disabled:opacity-40"
+                        >
+                          {r.paid ? (
+                            <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
+                              <circle cx="10" cy="10" r="9" fill="#52B788" />
+                              <path d="M6 10l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
+                              <circle cx="10" cy="10" r="9" stroke={isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)"} strokeWidth="1.5" />
+                            </svg>
+                          )}
+                        </button>
+                      </td>
                       <td className={`px-3 sm:px-4 py-3 sm:py-3.5 text-[10px] sm:text-xs whitespace-nowrap ${t("text-white/50", "text-gray-400")}`}>{formatDate(r.submittedAt)}</td>
                       <td className="px-3 sm:px-4 py-3 sm:py-3.5">
                         <div className={`text-[10px] sm:text-xs font-medium ${t("text-white", "text-gray-900")}`}>{r.driverName}</div>

@@ -31,6 +31,7 @@ async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Pro
 function normalise(r: StoredRegistration): StoredRegistration {
   return {
     ...r,
+    paid:        r.paid ?? false,
     extraNames:  Array.isArray(r.extraNames)  ? r.extraNames  : [],
     mealChoices: Array.isArray(r.mealChoices) ? r.mealChoices : [],
   };
@@ -70,6 +71,22 @@ async function redisAppendOne(reg: StoredRegistration): Promise<void> {
   } catch (err) {
     console.error("[store] redisAppendOne failed:", err);
     throw err; // re-throw so the API caller can return 500
+  }
+}
+
+async function redisUpdateOne(id: string, patch: Partial<StoredRegistration>): Promise<void> {
+  try {
+    await withRedis(async (client) => {
+      const raw = await client.get(REDIS_KEY);
+      if (!raw) { console.warn("[store] redisUpdateOne: key not found"); return; }
+      const all: StoredRegistration[] = (JSON.parse(raw) as StoredRegistration[]).map(normalise);
+      const next = all.map((r) => r.id === id ? { ...r, ...patch } : r);
+      await client.set(REDIS_KEY, JSON.stringify(next));
+      console.log(`[store] redisUpdateOne: updated id=${id}`);
+    });
+  } catch (err) {
+    console.error("[store] redisUpdateOne failed:", err);
+    throw err;
   }
 }
 
@@ -126,6 +143,17 @@ async function fileAppendOne(reg: StoredRegistration): Promise<void> {
   }
 }
 
+async function fileUpdateOne(id: string, patch: Partial<StoredRegistration>): Promise<void> {
+  try {
+    await ensureDir();
+    const all = await fileReadAll();
+    await fs.writeFile(getFile(), JSON.stringify(all.map((r) => r.id === id ? { ...r, ...patch } : r), null, 2), "utf-8");
+  } catch (err) {
+    console.error("[store] fileUpdateOne failed:", err);
+    throw err;
+  }
+}
+
 async function fileRemoveOne(id: string): Promise<void> {
   try {
     await ensureDir();
@@ -153,4 +181,9 @@ export async function appendOne(reg: StoredRegistration): Promise<void> {
 export async function removeOne(id: string): Promise<void> {
   if (isRedisAvailable()) return redisRemoveOne(id);
   return fileRemoveOne(id);
+}
+
+export async function updateOne(id: string, patch: Partial<StoredRegistration>): Promise<void> {
+  if (isRedisAvailable()) return redisUpdateOne(id, patch);
+  return fileUpdateOne(id, patch);
 }
