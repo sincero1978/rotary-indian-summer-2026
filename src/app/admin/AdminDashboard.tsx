@@ -625,7 +625,7 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
               <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: tickSz }} axisLine={false} tickLine={false} />
               <Tooltip {...tooltipStyle} formatter={(v) => [v, "Registrations"]} />
               <Bar dataKey="count" fill={CHART_BAR_FILL} radius={[4, 4, 0, 0]} maxBarSize={44}>
-                <LabelList dataKey="count" position="top" style={{ fill: labelColor, fontSize: labelSz, fontWeight: 600 }} />
+                <LabelList dataKey="count" position="top" fill={labelColor} style={{ fontSize: labelSz, fontWeight: 600 }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -711,7 +711,7 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
                   <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={30}>
                     {menuData.map((_, i) => <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />)}
                     <LabelList dataKey="count" position="right"
-                      style={{ fill: labelColor, fontSize: labelSz, fontWeight: 600 }} />
+                      fill={labelColor} style={{ fontSize: labelSz, fontWeight: 600 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -881,8 +881,7 @@ export default function AdminDashboard({
   const handleLogout = async () => {
     setLogoutLoading(true);
     await fetch("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
-    router.refresh();
+    window.location.href = "https://www.rotary-indian-summer.lu";
   };
 
   const handleDelete = async () => {
