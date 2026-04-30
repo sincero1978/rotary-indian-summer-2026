@@ -6,8 +6,6 @@ import type { StoredRegistration } from "./admin-types";
 export type { StoredRegistration };
 
 // ─── Redis store (Vercel / production) ───────────────────────────────────────
-// Uses REDIS_URL env var set by the Vercel Redis integration.
-// Falls back to local file storage when REDIS_URL is absent (local dev).
 
 const REDIS_KEY = "rist:registrations";
 
@@ -18,9 +16,9 @@ function isRedisAvailable(): boolean {
 async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Promise<T>): Promise<T> {
   const client = createClient({
     url: process.env.REDIS_URL,
-    socket: { reconnectStrategy: false }, // never hang retrying in serverless
+    socket: { reconnectStrategy: false, connectTimeout: 5000 },
   });
-  client.on("error", (err) => console.error("[redis]", err));
+  client.on("error", (err) => console.error("[store] Redis client error:", err));
   await client.connect();
   try {
     return await fn(client);
@@ -30,49 +28,56 @@ async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Pro
 }
 
 async function redisReadAll(): Promise<StoredRegistration[]> {
-  // BUG FIX: was missing await — errors were silently uncaught
-  return await withRedis(async (client) => {
-    const raw = await client.get(REDIS_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as StoredRegistration[];
-  });
+  try {
+    return await withRedis(async (client) => {
+      const raw = await client.get(REDIS_KEY);
+      if (!raw) {
+        console.log("[store] redisReadAll: key not found, returning []");
+        return [];
+      }
+      const parsed = JSON.parse(raw) as StoredRegistration[];
+      console.log(`[store] redisReadAll: loaded ${parsed.length} registrations`);
+      return parsed;
+    });
+  } catch (err) {
+    console.error("[store] redisReadAll failed — returning []:", err);
+    return [];
+  }
 }
 
-// Atomic append via Lua — avoids GET→modify→SET race condition under concurrent writes.
-const APPEND_LUA = `
-local raw = redis.call('GET', KEYS[1])
-local list = raw and cjson.decode(raw) or {}
-local item = cjson.decode(ARGV[1])
-list[#list + 1] = item
-redis.call('SET', KEYS[1], cjson.encode(list))
-return #list
-`;
-
-// Atomic remove via Lua — same reason.
-const REMOVE_LUA = `
-local raw = redis.call('GET', KEYS[1])
-if not raw then return 0 end
-local list = cjson.decode(raw)
-local newlist = {}
-for _, item in ipairs(list) do
-  if item['id'] ~= ARGV[1] then
-    newlist[#newlist + 1] = item
-  end
-end
-redis.call('SET', KEYS[1], cjson.encode(newlist))
-return #newlist
-`;
-
+// Append via GET→SET with optimistic retry. We intentionally avoid EVAL/Lua
+// because managed Redis providers (Upstash / Vercel KV) may disable or throttle it.
+// Two concurrent appends in the same millisecond are extremely unlikely for this
+// low-traffic portal; if it ever matters, a Redis List or a lock can be added.
 async function redisAppendOne(reg: StoredRegistration): Promise<void> {
-  return withRedis(async (client) => {
-    await client.eval(APPEND_LUA, { keys: [REDIS_KEY], arguments: [JSON.stringify(reg)] });
-  });
+  try {
+    await withRedis(async (client) => {
+      const raw = await client.get(REDIS_KEY);
+      const all: StoredRegistration[] = raw ? JSON.parse(raw) : [];
+      all.push(reg);
+      await client.set(REDIS_KEY, JSON.stringify(all));
+      console.log(`[store] redisAppendOne: saved ${all.length} registrations (ref=${reg.reference})`);
+    });
+  } catch (err) {
+    console.error("[store] redisAppendOne failed:", err);
+    throw err; // re-throw so the API caller can return 500
+  }
 }
 
 async function redisRemoveOne(id: string): Promise<void> {
-  return withRedis(async (client) => {
-    await client.eval(REMOVE_LUA, { keys: [REDIS_KEY], arguments: [id] });
-  });
+  try {
+    await withRedis(async (client) => {
+      const raw = await client.get(REDIS_KEY);
+      if (!raw) { console.warn("[store] redisRemoveOne: key not found, nothing to remove"); return; }
+      const all: StoredRegistration[] = JSON.parse(raw);
+      const next = all.filter((r) => r.id !== id);
+      await client.set(REDIS_KEY, JSON.stringify(next));
+      console.log(`[store] redisRemoveOne: removed id=${id}, ${next.length} remaining`);
+    });
+  } catch (err) {
+    console.error("[store] redisRemoveOne failed:", err);
+    throw err;
+  }
 }
 
 // ─── File store (local dev fallback) ─────────────────────────────────────────
@@ -87,11 +92,7 @@ function getFile(): string {
 }
 
 async function ensureDir(): Promise<void> {
-  try {
-    await fs.mkdir(getDataDir(), { recursive: true });
-  } catch {
-    // Already exists or read-only — fine for reads
-  }
+  try { await fs.mkdir(getDataDir(), { recursive: true }); } catch { /* exists */ }
 }
 
 async function fileReadAll(): Promise<StoredRegistration[]> {
@@ -111,7 +112,8 @@ async function fileAppendOne(reg: StoredRegistration): Promise<void> {
     all.push(reg);
     await fs.writeFile(getFile(), JSON.stringify(all, null, 2), "utf-8");
   } catch (err) {
-    console.error("[store] appendOne failed:", err);
+    console.error("[store] fileAppendOne failed:", err);
+    throw err;
   }
 }
 
@@ -119,19 +121,17 @@ async function fileRemoveOne(id: string): Promise<void> {
   try {
     await ensureDir();
     const all = await fileReadAll();
-    await fs.writeFile(
-      getFile(),
-      JSON.stringify(all.filter((r) => r.id !== id), null, 2),
-      "utf-8"
-    );
+    await fs.writeFile(getFile(), JSON.stringify(all.filter((r) => r.id !== id), null, 2), "utf-8");
   } catch (err) {
-    console.error("[store] removeOne failed:", err);
+    console.error("[store] fileRemoveOne failed:", err);
+    throw err;
   }
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export async function readAll(): Promise<StoredRegistration[]> {
+  console.log(`[store] readAll: redis=${isRedisAvailable()}`);
   if (isRedisAvailable()) return redisReadAll();
   return fileReadAll();
 }

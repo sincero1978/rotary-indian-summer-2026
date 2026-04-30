@@ -22,9 +22,12 @@ async function getKey(): Promise<CryptoKey> {
     // In production this is a critical misconfiguration — tokens can be forged
     // using the known fallback value visible in the public repository.
     if (process.env.NODE_ENV === "production") {
+      console.error("[auth] FATAL: ADMIN_SECRET env var is not set. Refusing to sign/verify tokens with the insecure fallback in production.");
       throw new Error("[auth] ADMIN_SECRET env var is not set. Refusing to sign/verify tokens with the insecure fallback in production.");
     }
     console.warn("[auth] WARNING: ADMIN_SECRET is not set. Using insecure fallback — set this env var before deploying.");
+  } else {
+    console.log("[auth] getKey: ADMIN_SECRET is set (length=" + secret.length + ")");
   }
   return crypto.subtle.importKey(
     "raw",
@@ -36,19 +39,21 @@ async function getKey(): Promise<CryptoKey> {
 }
 
 export async function createToken(username: string): Promise<string> {
+  console.log("[auth] createToken: signing token for user:", username);
   const payloadBytes = new TextEncoder().encode(
     JSON.stringify({ sub: username, exp: Date.now() + 8 * 60 * 60 * 1000 })
   );
   const payloadB64 = base64url(payloadBytes);
   const key = await getKey();
   const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payloadB64));
+  console.log("[auth] createToken: token created successfully for user:", username);
   return `${payloadB64}.${base64url(new Uint8Array(sig))}`;
 }
 
 export async function verifyToken(token: string): Promise<string | null> {
   try {
     const dot = token.lastIndexOf(".");
-    if (dot === -1) return null;
+    if (dot === -1) { console.warn("[auth] verifyToken: malformed token (no dot)"); return null; }
     const payloadB64 = token.slice(0, dot);
     const sigB64 = token.slice(dot + 1);
     const key = await getKey();
@@ -58,11 +63,16 @@ export async function verifyToken(token: string): Promise<string | null> {
       fromBase64url(sigB64),
       new TextEncoder().encode(payloadB64)
     );
-    if (!valid) return null;
+    if (!valid) { console.warn("[auth] verifyToken: signature invalid"); return null; }
     const data = JSON.parse(new TextDecoder().decode(fromBase64url(payloadB64)));
-    if (data.exp < Date.now()) return null;
+    if (data.exp < Date.now()) {
+      console.warn("[auth] verifyToken: token expired at", new Date(data.exp).toISOString());
+      return null;
+    }
+    console.log("[auth] verifyToken: valid token for user:", data.sub, "expires:", new Date(data.exp).toISOString());
     return data.sub as string;
-  } catch {
+  } catch (err) {
+    console.error("[auth] verifyToken: threw unexpectedly:", err);
     return null;
   }
 }
