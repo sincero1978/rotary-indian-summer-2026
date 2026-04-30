@@ -572,8 +572,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ reference });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("Registration error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Log full details server-side but never return internal messages to the client
+    console.error("Registration error:", err instanceof Error ? err.stack ?? err.message : String(err));
+    return NextResponse.json({ error: "Registration failed. Please try again." }, { status: 500 });
   }
 }

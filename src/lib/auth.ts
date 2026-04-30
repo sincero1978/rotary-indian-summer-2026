@@ -17,10 +17,18 @@ function fromBase64url(str: string): ArrayBuffer {
 }
 
 async function getKey(): Promise<CryptoKey> {
-  const secret = process.env.ADMIN_SECRET ?? "rotary-rist-2026-fallback-secret";
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) {
+    // In production this is a critical misconfiguration — tokens can be forged
+    // using the known fallback value visible in the public repository.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("[auth] ADMIN_SECRET env var is not set. Refusing to sign/verify tokens with the insecure fallback in production.");
+    }
+    console.warn("[auth] WARNING: ADMIN_SECRET is not set. Using insecure fallback — set this env var before deploying.");
+  }
   return crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(secret),
+    new TextEncoder().encode(secret ?? "rotary-rist-2026-fallback-secret"),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"]

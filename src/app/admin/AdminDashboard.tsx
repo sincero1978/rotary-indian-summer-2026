@@ -621,8 +621,13 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
                     outerRadius={78}
                     paddingAngle={3}
                     dataKey="value"
-                    label={({ name, percent, value }: { name?: string; percent?: number; value?: number }) => (
-                      `${name ?? ""} €${value ?? 0}`
+                    label={({ name, value, x, y }: {
+                      name?: string; value?: number;
+                      x?: number; y?: number;
+                    }) => (
+                      <text x={x} y={y} textAnchor="middle" fill="rgba(255,255,255,0.85)" fontSize={11}>
+                        {`${name ?? ""} €${value ?? 0}`}
+                      </text>
                     )}
                     labelLine={{ stroke: "rgba(255,255,255,0.3)", strokeWidth: 1 }}
                   >

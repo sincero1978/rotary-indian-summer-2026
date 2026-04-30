@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { createResetToken } from "@/lib/admin-config";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  // Rate limit: max 5 reset requests per IP per hour
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown";
+
+  if (await isRateLimited(`forgot:${ip}`, 5, 60 * 60)) {
+    // Return 200 to avoid leaking whether the IP is blocked (enumeration prevention)
+    return NextResponse.json({ ok: true });
+  }
+
   try {
     const { email } = await req.json();
     if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

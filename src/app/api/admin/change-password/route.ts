@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
-import { setPassword } from "@/lib/admin-config";
+import { setPassword, isTokenRevoked } from "@/lib/admin-config";
 
 export async function POST(req: NextRequest) {
-  // Verify authenticated session
+  // Verify authenticated session (including revocation check)
   const store = await cookies();
   const token = store.get("admin_token")?.value;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const username = await verifyToken(token);
   if (!username) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (await isTokenRevoked(token)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { newPassword, confirmPassword } = await req.json();
 

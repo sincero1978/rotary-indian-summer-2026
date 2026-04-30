@@ -1,4 +1,4 @@
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { scrypt, randomBytes, timingSafeEqual, createHash } from "crypto";
 import { createClient } from "redis";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -190,7 +190,42 @@ export async function setPassword(username: string, newPassword: string): Promis
   await setAdminCredentials(username, newPassword);
 }
 
-// ─── Reset tokens (HMAC-signed, no persistence needed) ───────────────────────
+// ─── Session token revocation ─────────────────────────────────────────────────
+// On logout we store a SHA-256 fingerprint of the token in Redis with a TTL
+// equal to the token's remaining lifetime. verifyToken checks this blocklist.
+
+const BLOCKLIST_PREFIX = "rist:auth:blocked:";
+
+function tokenFingerprint(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export async function revokeToken(token: string): Promise<void> {
+  if (!isRedisAvailable()) return;
+  const fp = tokenFingerprint(token);
+  try {
+    await withRedis(async (c) => {
+      // TTL = 8h (max session lifetime). Any residual time is safe to over-estimate.
+      await c.set(`${BLOCKLIST_PREFIX}${fp}`, "1", { EX: 8 * 60 * 60 });
+    });
+  } catch (err) {
+    console.error("[admin-config] revokeToken failed:", err);
+  }
+}
+
+export async function isTokenRevoked(token: string): Promise<boolean> {
+  if (!isRedisAvailable()) return false;
+  const fp = tokenFingerprint(token);
+  try {
+    return await withRedis(async (c) => {
+      return (await c.get(`${BLOCKLIST_PREFIX}${fp}`)) !== null;
+    });
+  } catch {
+    return false; // fail open — better than locking out all admins on Redis hiccup
+  }
+}
+
+// ─── Reset tokens (HMAC-signed, single-use via Redis) ─────────────────────────
 
 async function getTokenKey(): Promise<CryptoKey> {
   const secret = process.env.ADMIN_SECRET ?? "rotary-rist-2026-fallback-secret";
@@ -244,7 +279,32 @@ export async function consumeResetToken(token: string): Promise<boolean> {
     );
     if (!valid) return false;
     const data = JSON.parse(new TextDecoder().decode(fromBase64url(payload)));
-    return data.exp > Date.now();
+    if (data.exp <= Date.now()) return false;
+
+    // Enforce single-use: store a fingerprint in Redis with TTL = remaining lifetime.
+    // SETNX (NX option) atomically rejects if already used.
+    const fp = createHash("sha256").update(token).digest("hex");
+    const usedKey = `rist:reset:used:${fp}`;
+    const ttl = Math.ceil((data.exp - Date.now()) / 1000);
+
+    if (isRedisAvailable()) {
+      try {
+        const stored = await withRedis(async (c) => {
+          // SET key 1 NX EX ttl — returns "OK" if set, null if already exists
+          return c.set(usedKey, "1", { NX: true, EX: ttl });
+        });
+        if (stored === null) {
+          // Token was already used
+          console.warn("[admin-config] Reset token replay attempt detected.");
+          return false;
+        }
+      } catch (err) {
+        // Redis unavailable — allow the reset but log a warning
+        console.warn("[admin-config] Could not enforce single-use token (Redis unavailable):", err);
+      }
+    }
+
+    return true;
   } catch {
     return false;
   }

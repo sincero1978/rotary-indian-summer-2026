@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createToken } from "@/lib/auth";
 import { verifyAdminCredentials } from "@/lib/admin-config";
+import { isRateLimited, resetRateLimit } from "@/lib/rate-limit";
 
 // ─── Brute-force rate limiter ─────────────────────────────────────────────────
-// In-memory per-IP sliding window: max 10 attempts per 15 minutes.
-// Resets on successful login. Works within a single serverless invocation;
-// on Vercel each instance has its own counter — sufficient deterrent for
-// low-traffic portals. Replace with Redis-backed limiter if needed.
-
-const WINDOW_MS  = 15 * 60 * 1000; // 15 minutes
-const MAX_ATTEMPTS = 10;
-
-const attempts = new Map<string, { count: number; windowStart: number }>();
+// Redis-backed: 10 attempts per IP per 15 minutes, shared across all serverless
+// instances. Falls back to in-memory when Redis is unavailable (local dev).
 
 function getClientIp(req: NextRequest): string {
   return (
@@ -21,27 +15,13 @@ function getClientIp(req: NextRequest): string {
   );
 }
 
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = attempts.get(ip);
-  if (!entry || now - entry.windowStart > WINDOW_MS) {
-    attempts.set(ip, { count: 1, windowStart: now });
-    return false;
-  }
-  entry.count++;
-  return entry.count > MAX_ATTEMPTS;
-}
-
-function resetLimit(ip: string): void {
-  attempts.delete(ip);
-}
-
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
+  const limitKey = `login:${ip}`;
 
-  if (isRateLimited(ip)) {
+  if (await isRateLimited(limitKey, 10, 15 * 60)) {
     return NextResponse.json(
       { error: "Too many login attempts. Please try again later." },
       { status: 429 }
@@ -61,13 +41,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    resetLimit(ip);
+    // Successful login — clear the rate-limit counter for this IP
+    await resetRateLimit(limitKey);
+
     const token = await createToken(username);
     const res = NextResponse.json({ ok: true });
     res.cookies.set("admin_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "strict",   // upgraded from "lax" — prevents all cross-site cookie sends
       maxAge: 8 * 60 * 60,
       path: "/",
     });

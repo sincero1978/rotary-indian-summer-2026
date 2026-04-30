@@ -16,7 +16,10 @@ function isRedisAvailable(): boolean {
 }
 
 async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Promise<T>): Promise<T> {
-  const client = createClient({ url: process.env.REDIS_URL });
+  const client = createClient({
+    url: process.env.REDIS_URL,
+    socket: { reconnectStrategy: false }, // never hang retrying in serverless
+  });
   client.on("error", (err) => console.error("[redis]", err));
   await client.connect();
   try {
@@ -35,20 +38,40 @@ async function redisReadAll(): Promise<StoredRegistration[]> {
   });
 }
 
+// Atomic append via Lua — avoids GET→modify→SET race condition under concurrent writes.
+const APPEND_LUA = `
+local raw = redis.call('GET', KEYS[1])
+local list = raw and cjson.decode(raw) or {}
+local item = cjson.decode(ARGV[1])
+list[#list + 1] = item
+redis.call('SET', KEYS[1], cjson.encode(list))
+return #list
+`;
+
+// Atomic remove via Lua — same reason.
+const REMOVE_LUA = `
+local raw = redis.call('GET', KEYS[1])
+if not raw then return 0 end
+local list = cjson.decode(raw)
+local newlist = {}
+for _, item in ipairs(list) do
+  if item['id'] ~= ARGV[1] then
+    newlist[#newlist + 1] = item
+  end
+end
+redis.call('SET', KEYS[1], cjson.encode(newlist))
+return #newlist
+`;
+
 async function redisAppendOne(reg: StoredRegistration): Promise<void> {
   return withRedis(async (client) => {
-    const raw = await client.get(REDIS_KEY);
-    const all: StoredRegistration[] = raw ? JSON.parse(raw) : [];
-    all.push(reg);
-    await client.set(REDIS_KEY, JSON.stringify(all));
+    await client.eval(APPEND_LUA, { keys: [REDIS_KEY], arguments: [JSON.stringify(reg)] });
   });
 }
 
 async function redisRemoveOne(id: string): Promise<void> {
   return withRedis(async (client) => {
-    const raw = await client.get(REDIS_KEY);
-    const all: StoredRegistration[] = raw ? JSON.parse(raw) : [];
-    await client.set(REDIS_KEY, JSON.stringify(all.filter((r) => r.id !== id)));
+    await client.eval(REMOVE_LUA, { keys: [REDIS_KEY], arguments: [id] });
   });
 }
 
