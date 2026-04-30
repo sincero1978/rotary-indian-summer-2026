@@ -604,17 +604,19 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
       {(hasRevenueData || hasMenuData) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-          {/* Revenue donut — no inline labels (they clip on narrow screens).
-              Percentages are shown in the custom Legend instead. */}
+          {/* Revenue donut — legend below shows name + pct, no inline labels (they clip) */}
           {hasRevenueData && (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col">
               <h3 className="text-white font-semibold text-sm mb-3">Revenue breakdown</h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
+              {/* Fixed height: donut ~160px + legend ~40px = 220px — never clips */}
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                   <Pie
                     data={revenueData}
-                    cx="50%" cy="42%"
-                    innerRadius={52} outerRadius={78}
+                    cx="50%"
+                    cy="44%"
+                    innerRadius={56}
+                    outerRadius={82}
                     paddingAngle={3}
                     dataKey="value"
                   >
@@ -625,14 +627,16 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
                   <Tooltip {...PIE_TOOLTIP_STYLE} formatter={(v) => [`€${v}`, ""]} />
                   <Legend
                     iconType="circle"
-                    iconSize={8}
+                    iconSize={9}
+                    wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
                     formatter={(value, entry) => {
                       const pct = pieTotal > 0
                         ? Math.round(((entry as { payload?: { value: number } }).payload?.value ?? 0) / pieTotal * 100)
                         : 0;
                       return (
-                        <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11 }}>
-                          {value} <span style={{ color: "rgba(255,255,255,0.45)" }}>{pct}%</span>
+                        <span style={{ color: "rgba(255,255,255,0.8)" }}>
+                          {value}{" "}
+                          <span style={{ color: "rgba(255,255,255,0.45)" }}>{pct}%</span>
                         </span>
                       );
                     }}
@@ -642,15 +646,16 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
             </div>
           )}
 
-          {/* Menus horizontal bar chart */}
+          {/* Menus horizontal bar chart — height scales with number of items */}
           {hasMenuData && (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col">
               <h3 className="text-white font-semibold text-sm mb-3">Meals by menu</h3>
-              <ResponsiveContainer width="100%" height={200}>
+              {/* 60px per bar row + 28px for XAxis = always shows all bars */}
+              <ResponsiveContainer width="100%" height={Math.max(180, menuData.length * 60 + 28)}>
                 <BarChart
                   data={menuData}
                   layout="vertical"
-                  margin={{ top: 4, right: 20, left: 4, bottom: 0 }}
+                  margin={{ top: 4, right: 24, left: 0, bottom: 4 }}
                 >
                   <XAxis
                     type="number"
@@ -662,13 +667,13 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
                   <YAxis
                     type="category"
                     dataKey="name"
-                    width={120}
-                    tick={{ fill: "rgba(255,255,255,0.65)", fontSize: 10 }}
+                    width={118}
+                    tick={{ fill: "rgba(255,255,255,0.7)", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip {...TOOLTIP_STYLE} formatter={(v) => [v, "Orders"]} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={30}>
                     {menuData.map((_, i) => (
                       <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
                     ))}
