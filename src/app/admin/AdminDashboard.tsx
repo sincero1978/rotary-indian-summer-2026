@@ -14,6 +14,19 @@ import {
 } from "recharts";
 import type { StoredRegistration } from "@/lib/admin-types";
 
+// ─── Responsive width hook ────────────────────────────────────────────────────
+// Used to scale chart fonts and conditionally show/hide chart labels.
+
+function useWindowWidth(): number {
+  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handler, { passive: true });
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return width;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const BASE_PRICE  = 125;
@@ -530,6 +543,7 @@ function buildMenuData(regs: StoredRegistration[]) {
 function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: boolean }) {
   const t = mkT(isDark);
   const [period, setPeriod] = useState<TimePeriod>("day");
+  const winW = useWindowWidth();
 
   const timeData    = buildTimeData(regs, period);
   const revenueData = buildRevenueData(regs);
@@ -543,43 +557,61 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
 
   const pieTotal = revenueData.reduce((s, d) => s + d.value, 0);
 
-  // Chart color tokens — different per theme
-  const tickColor  = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)";
-  const labelColor = isDark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.6)";
-  const outerLabelColor = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.7)";
+  // ── Responsive chart sizing ─────────────────────────────────────────────────
+  // tickSz: axis tick labels in SVG (inline style, not Tailwind)
+  // labelSz: data labels above/beside bars
+  // Each tier aligns with Tailwind's sm (640) and lg (1024) breakpoints.
+  const isXs  = winW < 400;
+  const isSm  = winW >= 400 && winW < 640;
+  const isMd  = winW >= 640 && winW < 1024;
+  const tickSz  = isXs ? 8  : isSm ? 9  : 10;
+  const labelSz = isXs ? 9  : isSm ? 10 : 11;
+  const legendSz = isXs ? 10 : isSm ? 11 : 12;
+
+  // Pie radii: shrink on very small containers so inner % label has room
+  const pieInner  = isXs ? 40 : isSm ? 46 : 52;
+  const pieOuter  = isXs ? 60 : isSm ? 68 : 78;
+  // Chart container heights
+  const barH  = isXs ? 150 : 180;
+  const pieH  = isXs ? 220 : 260;
+
+  // ── Color tokens ────────────────────────────────────────────────────────────
+  const tickColor       = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)";
+  const yAxisColor      = isDark ? "rgba(255,255,255,0.7)"  : "rgba(0,0,0,0.6)";
+  const labelColor      = isDark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.6)";
   const legendMainColor = isDark ? "rgba(255,255,255,0.8)"  : "rgba(0,0,0,0.75)";
   const legendSubColor  = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)";
 
   const tooltipStyle = {
     contentStyle: isDark
-      ? { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: 12 }
-      : { background: "#fff",    border: "1px solid #e5e7eb",                 borderRadius: 10, color: "#111", fontSize: 12 },
+      ? { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: labelSz }
+      : { background: "#fff",    border: "1px solid #e5e7eb",                 borderRadius: 10, color: "#111", fontSize: labelSz },
     cursor: { fill: isDark ? "rgba(82,183,136,0.08)" : "rgba(82,183,136,0.1)" },
   };
   const pieTooltipStyle = {
     contentStyle: isDark
-      ? { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: 12 }
-      : { background: "#fff",    border: "1px solid #e5e7eb",                 borderRadius: 10, color: "#111", fontSize: 12 },
+      ? { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: labelSz }
+      : { background: "#fff",    border: "1px solid #e5e7eb",                 borderRadius: 10, color: "#111", fontSize: labelSz },
   };
 
-  const cardCls   = `border rounded-2xl p-4 sm:p-5 ${t("bg-white/5 border-white/10", "bg-white border-gray-200 shadow-sm")}`;
-  const titleCls  = `font-semibold text-sm mb-3 ${t("text-white", "text-gray-800")}`;
-  const toggleBg  = `flex gap-1 border rounded-full p-0.5 ${t("bg-white/5 border-white/10", "bg-gray-100 border-gray-200")}`;
+  const cardCls  = `border rounded-2xl p-3 sm:p-4 lg:p-5 ${t("bg-white/5 border-white/10", "bg-white border-gray-200 shadow-sm")}`;
+  const titleCls = `font-semibold text-xs sm:text-sm mb-3 ${t("text-white", "text-gray-800")}`;
+  const toggleBg = `flex gap-1 border rounded-full p-0.5 ${t("bg-white/5 border-white/10", "bg-gray-100 border-gray-200")}`;
 
   return (
     <div className="mb-8 space-y-4">
       {/* Registrations over time */}
       {hasTimeData && (
         <div className={cardCls}>
-          <div className="flex items-center justify-between mb-4 sm:mb-5 gap-3 flex-wrap">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <BarChart2 size={16} className="text-sage" />
+              <BarChart2 size={14} className="text-sage sm:w-4 sm:h-4" />
               <h3 className={titleCls}>Registrations over time</h3>
             </div>
             <div className={toggleBg}>
               {(["day", "week", "month"] as TimePeriod[]).map((p) => (
                 <button key={p} onClick={() => setPeriod(p)}
-                  className={`px-3 sm:px-3.5 py-1 rounded-full text-xs font-semibold capitalize transition-[background-color,color] duration-200 ${
+                  className={`px-2.5 sm:px-3.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold capitalize transition-[background-color,color] duration-200 ${
                     period === p ? "bg-sage text-forest" : t("text-white/50 hover:text-white", "text-gray-500 hover:text-gray-800")
                   }`}>
                   {p === "day" ? "Daily" : p === "week" ? "Weekly" : "Monthly"}
@@ -587,13 +619,13 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
               ))}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={timeData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
-              <XAxis dataKey="label" tick={{ fill: tickColor, fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 10 }} axisLine={false} tickLine={false} />
+          <ResponsiveContainer width="100%" height={barH}>
+            <BarChart data={timeData} margin={{ top: 16, right: 8, left: -28, bottom: 0 }}>
+              <XAxis dataKey="label" tick={{ fill: tickColor, fontSize: tickSz }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: tickSz }} axisLine={false} tickLine={false} />
               <Tooltip {...tooltipStyle} formatter={(v) => [v, "Registrations"]} />
               <Bar dataKey="count" fill={CHART_BAR_FILL} radius={[4, 4, 0, 0]} maxBarSize={44}>
-                <LabelList dataKey="count" position="top" style={{ fill: labelColor, fontSize: 11, fontWeight: 600 }} />
+                <LabelList dataKey="count" position="top" style={{ fill: labelColor, fontSize: labelSz, fontWeight: 600 }} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -604,36 +636,43 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
       {(hasRevenueData || hasMenuData) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-          {/* Revenue donut */}
+          {/* Revenue donut
+              Strategy: NO outer floating labels — they inevitably overlap the ring on narrow
+              containers. All info lives in the inner % LabelList + a rich Legend row below.
+              Legend shows: ● Name  €value  pct% — fully visible at every screen size. */}
           {hasRevenueData && (
             <div className={`${cardCls} flex flex-col`}>
               <h3 className={titleCls}>Revenue breakdown</h3>
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
-                  <Pie data={revenueData} cx="50%" cy="42%"
-                    innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value"
-                    label={({ name, value, x, y }: { name?: string; value?: number; x?: number; y?: number }) => (
-                      <text x={x} y={y} textAnchor="middle" fill={outerLabelColor} fontSize={11}>
-                        {`${name ?? ""} €${value ?? 0}`}
-                      </text>
-                    )}
-                    labelLine={{ stroke: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.2)", strokeWidth: 1 }}
+              <ResponsiveContainer width="100%" height={pieH}>
+                <PieChart margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
+                  <Pie
+                    data={revenueData}
+                    cx="50%" cy="40%"
+                    innerRadius={pieInner}
+                    outerRadius={pieOuter}
+                    paddingAngle={3}
+                    dataKey="value"
                   >
                     {revenueData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                    <LabelList dataKey="percent" position="inside"
+                    <LabelList
+                      dataKey="percent"
+                      position="inside"
                       formatter={(v: unknown) => `${Math.round(((v as number) ?? 0) * 100)}%`}
-                      style={{ fill: "rgba(20,45,32,0.95)", fontSize: 11, fontWeight: 700 }} />
+                      style={{ fill: "rgba(20,45,32,0.95)", fontSize: labelSz, fontWeight: 700 }}
+                    />
                   </Pie>
                   <Tooltip {...pieTooltipStyle} formatter={(v) => [`€${v}`, ""]} />
-                  <Legend iconType="circle" iconSize={9}
-                    wrapperStyle={{ paddingTop: 10, fontSize: 12 }}
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ paddingTop: 14, fontSize: legendSz }}
                     formatter={(value, entry) => {
-                      const pct = pieTotal > 0
-                        ? Math.round(((entry as { payload?: { value: number } }).payload?.value ?? 0) / pieTotal * 100)
-                        : 0;
+                      const raw = (entry as { payload?: { value: number } }).payload?.value ?? 0;
+                      const pct = pieTotal > 0 ? Math.round(raw / pieTotal * 100) : 0;
                       return (
                         <span style={{ color: legendMainColor }}>
-                          {value}{" "}<span style={{ color: legendSubColor }}>{pct}%</span>
+                          {value}
+                          <span style={{ color: legendSubColor }}>{" "}€{raw} · {pct}%</span>
                         </span>
                       );
                     }}
@@ -647,18 +686,19 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
           {hasMenuData && (
             <div className={`${cardCls} flex flex-col`}>
               <h3 className={titleCls}>Meals by menu</h3>
-              <ResponsiveContainer width="100%" height={Math.max(180, menuData.length * 60 + 28)}>
-                <BarChart data={menuData} layout="vertical" margin={{ top: 4, right: 36, left: 0, bottom: 4 }}>
+              <ResponsiveContainer width="100%" height={Math.max(160, menuData.length * 58 + 28)}>
+                <BarChart data={menuData} layout="vertical" margin={{ top: 4, right: 32, left: 0, bottom: 4 }}>
                   <XAxis type="number" allowDecimals={false}
-                    tick={{ fill: tickColor, fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" width={118}
-                    tick={{ fill: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)", fontSize: 10 }}
+                    tick={{ fill: tickColor, fontSize: tickSz }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name"
+                    width={isXs ? 90 : isSm ? 100 : 118}
+                    tick={{ fill: yAxisColor, fontSize: tickSz }}
                     axisLine={false} tickLine={false} />
                   <Tooltip {...tooltipStyle} formatter={(v) => [v, "Orders"]} />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={30}>
                     {menuData.map((_, i) => <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />)}
                     <LabelList dataKey="count" position="right"
-                      style={{ fill: labelColor, fontSize: 11, fontWeight: 600 }} />
+                      style={{ fill: labelColor, fontSize: labelSz, fontWeight: 600 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -854,9 +894,9 @@ export default function AdminDashboard({
       {/* ── Navbar ── */}
       <header className={`border-b px-6 lg:px-10 py-3 flex items-center justify-between gap-4 ${t("bg-[#152619] border-white/8", "bg-white border-gray-200 shadow-sm")}`}>
         <div className="flex items-center gap-4">
-          <Image src="/rally-logo.png" alt="RIST 2026" width={1184} height={621} className="h-24 w-auto" />
+          <Image src="/rally-logo.png" alt="RIST 2026" width={1184} height={621} className="h-14 sm:h-20 lg:h-24 w-auto" />
           <div className={`hidden sm:block h-5 w-px ${t("bg-white/20", "bg-gray-300")}`} />
-          <span className={`hidden sm:block text-xs tracking-[0.2em] uppercase ${t("text-white/50", "text-gray-400")}`}>Staff Portal</span>
+          <span className={`hidden sm:block text-[10px] lg:text-xs tracking-[0.2em] uppercase ${t("text-white/50", "text-gray-400")}`}>Staff Portal</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -903,20 +943,20 @@ export default function AdminDashboard({
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-10 py-5 sm:py-8">
 
         {/* ── Stats ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
-            { icon: <Users size={18} className="text-sage" />,           value: regs.length,    label: "Registrations", sub: "out of 60" },
-            { icon: <Euro size={18} className="text-sage" />,             value: `€${totalRevenue}`, label: "Total Revenue", sub: "collected" },
-            { icon: <UtensilsCrossed size={18} className="text-sage" />, value: totalMeals,     label: "Meals Ordered",  sub: "total covers" },
+            { icon: <Users size={16} className="text-sage sm:w-[18px] sm:h-[18px]" />,           value: regs.length,        label: "Registrations", sub: "out of 60" },
+            { icon: <Euro size={16} className="text-sage sm:w-[18px] sm:h-[18px]" />,             value: `€${totalRevenue}`, label: "Total Revenue", sub: "collected" },
+            { icon: <UtensilsCrossed size={16} className="text-sage sm:w-[18px] sm:h-[18px]" />, value: totalMeals,         label: "Meals Ordered", sub: "total covers" },
           ].map(({ icon, value, label, sub }) => (
-            <div key={label} className={`border rounded-2xl px-5 py-4 transition-colors ${t("bg-white/5 border-white/10", "bg-white border-gray-200 shadow-sm")}`}>
-              <div className="flex items-center gap-2 mb-2">{icon}</div>
-              <div className={`font-heading text-2xl font-bold leading-none ${t("text-white", "text-gray-900")}`}>{value}</div>
-              <div className={`text-xs mt-1 ${t("text-white/60", "text-gray-500")}`}>{label}</div>
-              <div className={`text-xs ${t("text-white/30", "text-gray-400")}`}>{sub}</div>
+            <div key={label} className={`border rounded-2xl px-4 sm:px-5 py-3 sm:py-4 transition-colors ${t("bg-white/5 border-white/10", "bg-white border-gray-200 shadow-sm")}`}>
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2">{icon}</div>
+              <div className={`font-heading text-xl sm:text-2xl font-bold leading-none ${t("text-white", "text-gray-900")}`}>{value}</div>
+              <div className={`text-[10px] sm:text-xs mt-1 ${t("text-white/60", "text-gray-500")}`}>{label}</div>
+              <div className={`text-[10px] sm:text-xs ${t("text-white/30", "text-gray-400")}`}>{sub}</div>
             </div>
           ))}
         </div>
@@ -925,16 +965,16 @@ export default function AdminDashboard({
         <ChartsSection regs={regs} isDark={isDark} />
 
         {/* ── Table header ── */}
-        <div className="flex items-center justify-between mb-4 gap-4">
-          <h2 className={`font-heading text-xl font-bold ${t("text-white", "text-gray-900")}`}>Registrations</h2>
+        <div className="flex items-center justify-between mb-3 sm:mb-4 gap-4">
+          <h2 className={`font-heading text-lg sm:text-xl font-bold ${t("text-white", "text-gray-900")}`}>Registrations</h2>
           <div className="flex items-center gap-2">
             <button onClick={handleRefresh} disabled={refreshing} title="Refresh list"
-              className={`w-9 h-9 rounded-full border flex items-center justify-center disabled:opacity-40 transition-colors duration-200 ${t("border-white/20 text-white/50 hover:text-white hover:bg-white/10", "border-gray-300 text-gray-400 hover:text-gray-700 hover:bg-gray-100")}`}>
-              <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
+              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full border flex items-center justify-center disabled:opacity-40 transition-colors duration-200 ${t("border-white/20 text-white/50 hover:text-white hover:bg-white/10", "border-gray-300 text-gray-400 hover:text-gray-700 hover:bg-gray-100")}`}>
+              <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
             </button>
             <button onClick={() => setShowAdd(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-sage text-forest font-semibold text-sm hover:bg-sage-light active:scale-[0.98] transition-[background-color,transform] duration-200 shadow-[0_4px_16px_rgba(82,183,136,0.3)]">
-              <Plus size={15} /> Add Registration
+              className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full bg-sage text-forest font-semibold text-xs sm:text-sm hover:bg-sage-light active:scale-[0.98] transition-[background-color,transform] duration-200 shadow-[0_4px_16px_rgba(82,183,136,0.3)]">
+              <Plus size={13} /> <span className="hidden xs:inline">Add Registration</span><span className="xs:hidden">Add</span>
             </button>
           </div>
         </div>
@@ -952,7 +992,7 @@ export default function AdminDashboard({
                 <thead>
                   <tr className={`border-b ${t("border-white/10 bg-white/5", "border-gray-200 bg-gray-50")}`}>
                     {["Reference", "Date", "Driver / Co-pilot", "Email", "Car", "Extras", "Meals", "Total", "Lang", ""].map((h) => (
-                      <th key={h} className={`px-4 py-3 text-left text-xs font-semibold tracking-[0.12em] uppercase whitespace-nowrap ${t("text-white/50", "text-gray-500")}`}>
+                      <th key={h} className={`px-3 sm:px-4 py-2.5 sm:py-3 text-left text-[10px] sm:text-xs font-semibold tracking-[0.12em] uppercase whitespace-nowrap ${t("text-white/50", "text-gray-500")}`}>
                         {h}
                       </th>
                     ))}
@@ -961,53 +1001,53 @@ export default function AdminDashboard({
                 <tbody className={`divide-y ${t("divide-white/8", "divide-gray-100")}`}>
                   {regs.map((r) => (
                     <tr key={r.id} className={`transition-colors ${t("hover:bg-white/5", "hover:bg-gray-50")}`}>
-                      <td className="px-4 py-3.5 font-mono text-sage text-xs whitespace-nowrap">{r.reference}</td>
-                      <td className={`px-4 py-3.5 text-xs whitespace-nowrap ${t("text-white/50", "text-gray-400")}`}>{formatDate(r.submittedAt)}</td>
-                      <td className="px-4 py-3.5">
-                        <div className={`text-xs font-medium ${t("text-white", "text-gray-900")}`}>{r.driverName}</div>
-                        <div className={`text-xs ${t("text-white/50", "text-gray-500")}`}>{r.copilotName}</div>
+                      <td className="px-3 sm:px-4 py-3 sm:py-3.5 font-mono text-sage text-[10px] sm:text-xs whitespace-nowrap">{r.reference}</td>
+                      <td className={`px-3 sm:px-4 py-3 sm:py-3.5 text-[10px] sm:text-xs whitespace-nowrap ${t("text-white/50", "text-gray-400")}`}>{formatDate(r.submittedAt)}</td>
+                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
+                        <div className={`text-[10px] sm:text-xs font-medium ${t("text-white", "text-gray-900")}`}>{r.driverName}</div>
+                        <div className={`text-[10px] sm:text-xs ${t("text-white/50", "text-gray-500")}`}>{r.copilotName}</div>
                         {r.extraNames.map((n) => (
-                          <div key={n} className={`text-xs ${t("text-white/40", "text-gray-400")}`}>+{n}</div>
+                          <div key={n} className={`text-[10px] sm:text-xs ${t("text-white/40", "text-gray-400")}`}>+{n}</div>
                         ))}
                       </td>
-                      <td className="px-4 py-3.5">
-                        <a href={`mailto:${r.email}`} className={`text-xs hover:text-sage transition-colors ${t("text-white/60", "text-gray-600")}`}>{r.email}</a>
-                        <div className={`text-xs mt-0.5 ${t("text-white/30", "text-gray-400")}`}>{r.phone}</div>
+                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
+                        <a href={`mailto:${r.email}`} className={`text-[10px] sm:text-xs hover:text-sage transition-colors ${t("text-white/60", "text-gray-600")}`}>{r.email}</a>
+                        <div className={`text-[10px] sm:text-xs mt-0.5 ${t("text-white/30", "text-gray-400")}`}>{r.phone}</div>
                       </td>
-                      <td className={`px-4 py-3.5 text-xs whitespace-nowrap ${t("text-white/70", "text-gray-700")}`}>
+                      <td className={`px-3 sm:px-4 py-3 sm:py-3.5 text-[10px] sm:text-xs whitespace-nowrap ${t("text-white/70", "text-gray-700")}`}>
                         {r.carMake} {r.carModel}
-                        <div className={`text-xs ${t("text-white/30", "text-gray-400")}`}>{r.carYear}</div>
+                        <div className={`text-[10px] sm:text-xs ${t("text-white/30", "text-gray-400")}`}>{r.carYear}</div>
                       </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                      <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-center">
+                        <span className={`inline-block px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
                           r.extraParticipants > 0 ? "bg-sage/15 text-sage" : t("text-white/30", "text-gray-400")
                         }`}>
                           {r.extraParticipants > 0 ? `+${r.extraParticipants}` : "—"}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
                         {r.mealChoices.filter((m) => m.include).length > 0 ? (
                           <div className="space-y-0.5">
                             {r.mealChoices.map((m, i) => m.include && (
-                              <div key={i} className={`text-xs whitespace-nowrap ${t("text-white/60", "text-gray-600")}`}>
+                              <div key={i} className={`text-[10px] sm:text-xs whitespace-nowrap ${t("text-white/60", "text-gray-600")}`}>
                                 {i === 0 ? r.driverName : i === 1 ? r.copilotName : r.extraNames[i - 2] || `P${i + 1}`}: M{m.menu}
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <span className={`text-xs ${t("text-white/25", "text-gray-400")}`}>No meals</span>
+                          <span className={`text-[10px] sm:text-xs ${t("text-white/25", "text-gray-400")}`}>No meals</span>
                         )}
                       </td>
-                      <td className={`px-4 py-3.5 font-heading font-bold whitespace-nowrap ${t("text-white", "text-gray-900")}`}>€{r.total}</td>
-                      <td className="px-4 py-3.5">
-                        <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${t("bg-white/8 text-white/50", "bg-gray-100 text-gray-500")}`}>
+                      <td className={`px-3 sm:px-4 py-3 sm:py-3.5 font-heading text-xs sm:text-sm font-bold whitespace-nowrap ${t("text-white", "text-gray-900")}`}>€{r.total}</td>
+                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
+                        <span className={`inline-block text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded ${t("bg-white/8 text-white/50", "bg-gray-100 text-gray-500")}`}>
                           {LANG_LABELS[r.lang] ?? r.lang}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
                         <button onClick={() => setDeleteId(r.id)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-400/15 transition-colors duration-200">
-                          <Trash2 size={13} />
+                          className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-400/15 transition-colors duration-200">
+                          <Trash2 size={12} />
                         </button>
                       </td>
                     </tr>
@@ -1020,10 +1060,10 @@ export default function AdminDashboard({
 
         {/* ── Print button ── */}
         {regs.length > 0 && (
-          <div className="mt-6 flex justify-end">
+          <div className="mt-4 sm:mt-6 flex justify-end">
             <button onClick={() => printRegistrations(regs)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-sm transition-colors duration-200 ${t("border-white/20 text-white/60 hover:bg-white/8 hover:text-white", "border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-800")}`}>
-              <Printer size={15} />
+              className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border text-xs sm:text-sm transition-colors duration-200 ${t("border-white/20 text-white/60 hover:bg-white/8 hover:text-white", "border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-800")}`}>
+              <Printer size={13} />
               Print Registration List
             </button>
           </div>
