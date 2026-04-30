@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, Legend, LabelList,
 } from "recharts";
 import type { StoredRegistration } from "@/lib/admin-types";
 
@@ -594,7 +594,9 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
               <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 10 }} axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip {...TOOLTIP_STYLE} formatter={(v) => [v, "Registrations"]} />
-              <Bar dataKey="count" fill={CHART_COLORS.bar} radius={[4, 4, 0, 0]} maxBarSize={44} />
+              <Bar dataKey="count" fill={CHART_COLORS.bar} radius={[4, 4, 0, 0]} maxBarSize={44}>
+                <LabelList dataKey="count" position="top" style={{ fill: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 600 }} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -609,26 +611,36 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col">
               <h3 className="text-white font-semibold text-sm mb-3">Revenue breakdown</h3>
               {/* Fixed height: donut ~160px + legend ~40px = 220px — never clips */}
-              <ResponsiveContainer width="100%" height={240}>
-                <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
                   <Pie
                     data={revenueData}
                     cx="50%"
-                    cy="44%"
-                    innerRadius={56}
-                    outerRadius={82}
+                    cy="42%"
+                    innerRadius={52}
+                    outerRadius={78}
                     paddingAngle={3}
                     dataKey="value"
+                    label={({ name, percent, value }: { name?: string; percent?: number; value?: number }) => (
+                      `${name ?? ""} €${value ?? 0}`
+                    )}
+                    labelLine={{ stroke: "rgba(255,255,255,0.3)", strokeWidth: 1 }}
                   >
                     {revenueData.map((_, i) => (
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
+                    <LabelList
+                      dataKey="percent"
+                      position="inside"
+                      formatter={(v: unknown) => `${Math.round(((v as number) ?? 0) * 100)}%`}
+                      style={{ fill: "rgba(20,45,32,0.95)", fontSize: 11, fontWeight: 700 }}
+                    />
                   </Pie>
                   <Tooltip {...PIE_TOOLTIP_STYLE} formatter={(v) => [`€${v}`, ""]} />
                   <Legend
                     iconType="circle"
                     iconSize={9}
-                    wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
+                    wrapperStyle={{ paddingTop: 10, fontSize: 12 }}
                     formatter={(value, entry) => {
                       const pct = pieTotal > 0
                         ? Math.round(((entry as { payload?: { value: number } }).payload?.value ?? 0) / pieTotal * 100)
@@ -655,7 +667,7 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
                 <BarChart
                   data={menuData}
                   layout="vertical"
-                  margin={{ top: 4, right: 24, left: 0, bottom: 4 }}
+                  margin={{ top: 4, right: 36, left: 0, bottom: 4 }}
                 >
                   <XAxis
                     type="number"
@@ -677,6 +689,7 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
                     {menuData.map((_, i) => (
                       <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
                     ))}
+                    <LabelList dataKey="count" position="right" style={{ fill: "rgba(255,255,255,0.7)", fontSize: 11, fontWeight: 600 }} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
