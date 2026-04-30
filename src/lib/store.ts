@@ -27,6 +27,15 @@ async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Pro
   }
 }
 
+/** Ensure legacy / partially-written records don't crash callers. */
+function normalise(r: StoredRegistration): StoredRegistration {
+  return {
+    ...r,
+    extraNames:  Array.isArray(r.extraNames)  ? r.extraNames  : [],
+    mealChoices: Array.isArray(r.mealChoices) ? r.mealChoices : [],
+  };
+}
+
 async function redisReadAll(): Promise<StoredRegistration[]> {
   try {
     return await withRedis(async (client) => {
@@ -35,7 +44,7 @@ async function redisReadAll(): Promise<StoredRegistration[]> {
         console.log("[store] redisReadAll: key not found, returning []");
         return [];
       }
-      const parsed = JSON.parse(raw) as StoredRegistration[];
+      const parsed = (JSON.parse(raw) as StoredRegistration[]).map(normalise);
       console.log(`[store] redisReadAll: loaded ${parsed.length} registrations`);
       return parsed;
     });
@@ -99,7 +108,7 @@ async function fileReadAll(): Promise<StoredRegistration[]> {
   try {
     await ensureDir();
     const data = await fs.readFile(getFile(), "utf-8");
-    return JSON.parse(data) as StoredRegistration[];
+    return (JSON.parse(data) as StoredRegistration[]).map(normalise);
   } catch {
     return [];
   }
