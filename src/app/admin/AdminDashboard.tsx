@@ -53,7 +53,7 @@ function mkT(isDark: boolean) {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("en-GB", {
-    day: "2-digit", month: "short", year: "numeric",
+    day: "2-digit", month: "short",
     hour: "2-digit", minute: "2-digit",
   });
 }
@@ -751,6 +751,8 @@ function printRegistrations(regs: StoredRegistration[]) {
   const totalRevenue = regs.reduce((s, r) => s + r.total, 0);
   const totalMeals   = regs.reduce((s, r) => s + r.mealChoices.filter((m) => m.include).length, 0);
   const totalPeople  = regs.reduce((s, r) => s + 2 + r.extraParticipants, 0);
+  const totalPaid    = regs.filter((r) => r.paid).length;
+  const hasExtras    = regs.some((r) => r.extraParticipants > 0);
 
   const rows = regs.map((r, i) => {
     const meals = r.mealChoices
@@ -761,17 +763,27 @@ function printRegistrations(regs: StoredRegistration[]) {
       })
       .filter(Boolean).join("<br>");
     const participants = [r.driverName, r.copilotName, ...r.extraNames].join(", ");
+    const paidCell = r.paid
+      ? `<span class="paid-yes">&#10003; Paid</span>`
+      : `<span class="paid-no">&#9675; Unpaid</span>`;
+    const extrasCell = hasExtras
+      ? `<td class="center">${r.extraParticipants > 0 ? `+${r.extraParticipants}` : "—"}</td>`
+      : "";
     return `
       <tr class="${i % 2 === 0 ? "even" : ""}">
         <td class="ref">${r.reference}</td>
+        <td class="center">${paidCell}</td>
         <td>${new Date(r.submittedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</td>
         <td>${participants}</td>
         <td>${r.email}<br><span class="sub">${r.phone}</span></td>
         <td>${r.carMake} ${r.carModel}<br><span class="sub">${r.carYear}</span></td>
+        ${extrasCell}
         <td class="center">${meals || '<span class="none">—</span>'}</td>
         <td class="center amount">€${r.total}</td>
       </tr>`;
   }).join("");
+
+  const extrasHeader = hasExtras ? "<th class=\"center\">Extras</th>" : "";
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -794,6 +806,7 @@ function printRegistrations(regs: StoredRegistration[]) {
     table { width: 100%; border-collapse: collapse; }
     thead tr { background: #2D6A4F; }
     thead th { padding: 7px 8px; text-align: left; color: white; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
+    thead th.center { text-align: center; }
     tbody tr { border-bottom: 1px solid #eee; }
     tbody tr.even { background: #f8fcf9; }
     tbody td { padding: 6px 8px; vertical-align: top; line-height: 1.4; }
@@ -802,6 +815,8 @@ function printRegistrations(regs: StoredRegistration[]) {
     .center { text-align: center; }
     .amount { font-weight: bold; white-space: nowrap; }
     .none { color: #bbb; }
+    .paid-yes { color: #2D6A4F; font-weight: bold; white-space: nowrap; }
+    .paid-no  { color: #bbb; white-space: nowrap; }
     .footer { margin: 16px 24px 0; padding: 12px 0; border-top: 1px solid #ddd; display: flex; justify-content: space-between; font-size: 9px; color: #aaa; }
     @page { size: A4 landscape; margin: 10mm; }
     @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
@@ -822,11 +837,12 @@ function printRegistrations(regs: StoredRegistration[]) {
     <div class="stat"><div class="stat-value">${regs.length}</div><div class="stat-label">Registrations</div></div>
     <div class="stat"><div class="stat-value">${totalPeople}</div><div class="stat-label">Participants</div></div>
     <div class="stat"><div class="stat-value">${totalMeals}</div><div class="stat-label">Meals ordered</div></div>
+    <div class="stat"><div class="stat-value">${totalPaid}/${regs.length}</div><div class="stat-label">Payments received</div></div>
     <div class="stat"><div class="stat-value">€${totalRevenue}</div><div class="stat-label">Total revenue</div></div>
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Reference</th><th>Date</th><th>Participants</th><th>Contact</th><th>Vehicle</th><th>Meals</th><th>Total</th></tr></thead>
+      <thead><tr><th>Reference</th><th class="center">Paid</th><th>Date</th><th>Participants</th><th>Contact</th><th>Vehicle</th>${extrasHeader}<th>Meals</th><th class="center">Total</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>
@@ -1035,97 +1051,128 @@ export default function AdminDashboard({
             <Users size={36} className={`mx-auto mb-3 ${t("text-white/20", "text-gray-300")}`} />
             <p className={`text-sm ${t("text-white/40", "text-gray-400")}`}>No registrations yet.</p>
           </div>
-        ) : (
+        ) : (() => {
+          const hasExtras = regs.some((r) => r.extraParticipants > 0);
+          return (
           <div className={`border rounded-2xl overflow-hidden ${t("bg-white/5 border-white/10", "bg-white border-gray-200 shadow-sm")}`}>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-sm">
-                <thead>
-                  <tr className={`border-b ${t("border-white/10 bg-white/5", "border-gray-200 bg-gray-50")}`}>
-                    {["Reference", "Paid", "Date", "Driver / Co-pilot", "Email", "Car", "Extras", "Meals", "Total", "Lang", ""].map((h) => (
-                      <th key={h} className={`px-3 sm:px-4 py-2.5 sm:py-3 text-left text-[10px] sm:text-xs font-semibold tracking-[0.12em] uppercase whitespace-nowrap ${t("text-white/50", "text-gray-500")}`}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${t("divide-white/8", "divide-gray-100")}`}>
-                  {regs.map((r) => (
-                    <tr key={r.id} className={`transition-colors ${t("hover:bg-white/5", "hover:bg-gray-50")}`}>
-                      <td className="px-3 sm:px-4 py-3 sm:py-3.5 font-mono text-sage text-[10px] sm:text-xs whitespace-nowrap">{r.reference}</td>
-                      <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-center">
-                        <button
-                          onClick={() => togglePaid(r.id, r.paid ?? false)}
-                          disabled={paidUpdating.has(r.id)}
-                          title={r.paid ? "Mark as unpaid" : "Mark as paid"}
-                          className="inline-flex items-center justify-center w-6 h-6 rounded-full transition-all duration-200 disabled:opacity-40"
-                        >
-                          {r.paid ? (
-                            <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
-                              <circle cx="10" cy="10" r="9" fill="#52B788" />
-                              <path d="M6 10l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          ) : (
-                            <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
-                              <circle cx="10" cy="10" r="9" stroke={isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)"} strokeWidth="1.5" />
-                            </svg>
-                          )}
-                        </button>
-                      </td>
-                      <td className={`px-3 sm:px-4 py-3 sm:py-3.5 text-[10px] sm:text-xs whitespace-nowrap ${t("text-white/50", "text-gray-400")}`}>{formatDate(r.submittedAt)}</td>
-                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
-                        <div className={`text-[10px] sm:text-xs font-medium ${t("text-white", "text-gray-900")}`}>{r.driverName}</div>
-                        <div className={`text-[10px] sm:text-xs ${t("text-white/50", "text-gray-500")}`}>{r.copilotName}</div>
-                        {r.extraNames.map((n) => (
-                          <div key={n} className={`text-[10px] sm:text-xs ${t("text-white/40", "text-gray-400")}`}>+{n}</div>
-                        ))}
-                      </td>
-                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
-                        <a href={`mailto:${r.email}`} className={`text-[10px] sm:text-xs hover:text-sage transition-colors ${t("text-white/60", "text-gray-600")}`}>{r.email}</a>
-                        <div className={`text-[10px] sm:text-xs mt-0.5 ${t("text-white/30", "text-gray-400")}`}>{r.phone}</div>
-                      </td>
-                      <td className={`px-3 sm:px-4 py-3 sm:py-3.5 text-[10px] sm:text-xs whitespace-nowrap ${t("text-white/70", "text-gray-700")}`}>
-                        {r.carMake} {r.carModel}
-                        <div className={`text-[10px] sm:text-xs ${t("text-white/30", "text-gray-400")}`}>{r.carYear}</div>
-                      </td>
-                      <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-center">
-                        <span className={`inline-block px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
+            <table className="w-full table-fixed text-sm">
+              <colgroup>
+                <col style={{ width: hasExtras ? "13%" : "14%" }} />{/* Reference */}
+                <col style={{ width: "5%" }} />                       {/* Paid */}
+                <col style={{ width: hasExtras ? "10%" : "11%" }} />{/* Date */}
+                <col style={{ width: hasExtras ? "13%" : "14%" }} />{/* Driver */}
+                <col style={{ width: hasExtras ? "14%" : "16%" }} />{/* Email */}
+                <col style={{ width: hasExtras ? "12%" : "13%" }} />{/* Car */}
+                {hasExtras && <col style={{ width: "5%" }} />}       {/* Extras */}
+                <col style={{ width: hasExtras ? "16%" : "17%" }} />{/* Meals */}
+                <col style={{ width: "5%" }} />                      {/* Total */}
+                <col style={{ width: "4%" }} />                      {/* Lang */}
+                <col style={{ width: "3%" }} />                      {/* Delete */}
+              </colgroup>
+              <thead>
+                <tr className={`border-b ${t("border-white/10 bg-white/5", "border-gray-200 bg-gray-50")}`}>
+                  {["Reference", "Paid", "Date", "Driver / Co-pilot", "Email", "Car", ...(hasExtras ? ["Extras"] : []), "Meals", "Total", "Lang", ""].map((h) => (
+                    <th key={h} className={`px-2 sm:px-3 py-2.5 sm:py-3 text-left text-[9px] sm:text-[10px] font-semibold tracking-[0.1em] uppercase ${t("text-white/50", "text-gray-500")}`}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${t("divide-white/8", "divide-gray-100")}`}>
+                {regs.map((r) => (
+                  <tr key={r.id} className={`transition-colors ${t("hover:bg-white/5", "hover:bg-gray-50")}`}>
+                    {/* Reference */}
+                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 font-mono text-sage text-[9px] sm:text-[10px] overflow-hidden">
+                      <span className="block truncate">{r.reference}</span>
+                    </td>
+                    {/* Paid */}
+                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 text-center">
+                      <button
+                        onClick={() => togglePaid(r.id, r.paid ?? false)}
+                        disabled={paidUpdating.has(r.id)}
+                        title={r.paid ? "Mark as unpaid" : "Mark as paid"}
+                        className="inline-flex items-center justify-center w-5 h-5 rounded-full transition-all duration-200 disabled:opacity-40"
+                      >
+                        {r.paid ? (
+                          <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
+                            <circle cx="10" cy="10" r="9" fill="#52B788" />
+                            <path d="M6 10l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
+                            <circle cx="10" cy="10" r="9" stroke={isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)"} strokeWidth="1.5" />
+                          </svg>
+                        )}
+                      </button>
+                    </td>
+                    {/* Date */}
+                    <td className={`px-2 sm:px-3 py-2.5 sm:py-3 text-[9px] sm:text-[10px] overflow-hidden ${t("text-white/50", "text-gray-400")}`}>
+                      <span className="block truncate">{formatDate(r.submittedAt)}</span>
+                    </td>
+                    {/* Driver / Co-pilot */}
+                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 overflow-hidden">
+                      <div className={`text-[9px] sm:text-[10px] font-medium truncate ${t("text-white", "text-gray-900")}`}>{r.driverName}</div>
+                      <div className={`text-[9px] sm:text-[10px] truncate ${t("text-white/50", "text-gray-500")}`}>{r.copilotName}</div>
+                      {r.extraNames.map((n) => (
+                        <div key={n} className={`text-[9px] sm:text-[10px] truncate ${t("text-white/40", "text-gray-400")}`}>+{n}</div>
+                      ))}
+                    </td>
+                    {/* Email */}
+                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 overflow-hidden">
+                      <a href={`mailto:${r.email}`} className={`text-[9px] sm:text-[10px] block truncate hover:text-sage transition-colors ${t("text-white/60", "text-gray-600")}`}>{r.email}</a>
+                      <div className={`text-[9px] sm:text-[10px] truncate mt-0.5 ${t("text-white/30", "text-gray-400")}`}>{r.phone}</div>
+                    </td>
+                    {/* Car */}
+                    <td className={`px-2 sm:px-3 py-2.5 sm:py-3 overflow-hidden ${t("text-white/70", "text-gray-700")}`}>
+                      <div className="text-[9px] sm:text-[10px] truncate">{r.carMake} {r.carModel}</div>
+                      <div className={`text-[9px] sm:text-[10px] ${t("text-white/30", "text-gray-400")}`}>{r.carYear}</div>
+                    </td>
+                    {/* Extras (conditional) */}
+                    {hasExtras && (
+                      <td className="px-2 sm:px-3 py-2.5 sm:py-3 text-center">
+                        <span className={`inline-block px-1 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium ${
                           r.extraParticipants > 0 ? "bg-sage/15 text-sage" : t("text-white/30", "text-gray-400")
                         }`}>
                           {r.extraParticipants > 0 ? `+${r.extraParticipants}` : "—"}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
-                        {r.mealChoices.filter((m) => m.include).length > 0 ? (
-                          <div className="space-y-0.5">
-                            {r.mealChoices.map((m, i) => m.include && (
-                              <div key={i} className={`text-[10px] sm:text-xs whitespace-nowrap ${t("text-white/60", "text-gray-600")}`}>
-                                {i === 0 ? r.driverName : i === 1 ? r.copilotName : r.extraNames[i - 2] || `P${i + 1}`}: M{m.menu}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className={`text-[10px] sm:text-xs ${t("text-white/25", "text-gray-400")}`}>No meals</span>
-                        )}
-                      </td>
-                      <td className={`px-3 sm:px-4 py-3 sm:py-3.5 font-heading text-xs sm:text-sm font-bold whitespace-nowrap ${t("text-white", "text-gray-900")}`}>€{r.total}</td>
-                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
-                        <span className={`inline-block text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded ${t("bg-white/8 text-white/50", "bg-gray-100 text-gray-500")}`}>
-                          {LANG_LABELS[r.lang] ?? r.lang}
-                        </span>
-                      </td>
-                      <td className="px-3 sm:px-4 py-3 sm:py-3.5">
-                        <button onClick={() => setDeleteId(r.id)}
-                          className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-400/15 transition-colors duration-200">
-                          <Trash2 size={12} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    )}
+                    {/* Meals */}
+                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 overflow-hidden">
+                      {r.mealChoices.filter((m) => m.include).length > 0 ? (
+                        <div className="space-y-0.5">
+                          {r.mealChoices.map((m, i) => m.include && (
+                            <div key={i} className={`text-[9px] sm:text-[10px] truncate ${t("text-white/60", "text-gray-600")}`}>
+                              {i === 0 ? r.driverName : i === 1 ? r.copilotName : r.extraNames[i - 2] || `P${i + 1}`}: M{m.menu}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className={`text-[9px] sm:text-[10px] ${t("text-white/25", "text-gray-400")}`}>—</span>
+                      )}
+                    </td>
+                    {/* Total */}
+                    <td className={`px-2 sm:px-3 py-2.5 sm:py-3 text-[9px] sm:text-[10px] font-bold whitespace-nowrap ${t("text-white", "text-gray-900")}`}>€{r.total}</td>
+                    {/* Lang */}
+                    <td className="px-2 sm:px-3 py-2.5 sm:py-3">
+                      <span className={`inline-block text-[9px] sm:text-[10px] font-medium px-1 py-0.5 rounded ${t("bg-white/8 text-white/50", "bg-gray-100 text-gray-500")}`}>
+                        {LANG_LABELS[r.lang] ?? r.lang}
+                      </span>
+                    </td>
+                    {/* Delete */}
+                    <td className="px-1 sm:px-2 py-2.5 sm:py-3">
+                      <button onClick={() => setDeleteId(r.id)}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-400/15 transition-colors duration-200">
+                        <Trash2 size={11} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
+          );
+        })()}
 
         {/* ── Print button ── */}
         {regs.length > 0 && (
