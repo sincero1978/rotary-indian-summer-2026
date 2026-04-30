@@ -625,7 +625,13 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
               <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: tickSz }} axisLine={false} tickLine={false} />
               <Tooltip {...tooltipStyle} formatter={(v) => [v, "Registrations"]} />
               <Bar dataKey="count" fill={CHART_BAR_FILL} radius={[4, 4, 0, 0]} maxBarSize={44}>
-                <LabelList dataKey="count" position="top" fill={labelColor} style={{ fontSize: labelSz, fontWeight: 600 }} />
+                <LabelList dataKey="count" position="top"
+                  content={({ x, y, width, value }) => (
+                    <text x={Number(x ?? 0) + Number(width ?? 0) / 2} y={Number(y ?? 0) - 4}
+                      textAnchor="middle" fill={labelColor} fontSize={labelSz} fontWeight={600}>
+                      {value}
+                    </text>
+                  )} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -711,7 +717,12 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
                   <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={30}>
                     {menuData.map((_, i) => <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />)}
                     <LabelList dataKey="count" position="right"
-                      fill={labelColor} style={{ fontSize: labelSz, fontWeight: 600 }} />
+                      content={({ x, y, width, height, value }) => (
+                        <text x={Number(x ?? 0) + Number(width ?? 0) + 6} y={Number(y ?? 0) + Number(height ?? 0) / 2}
+                          dominantBaseline="central" fill={labelColor} fontSize={labelSz} fontWeight={600}>
+                          {value}
+                        </text>
+                      )} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
