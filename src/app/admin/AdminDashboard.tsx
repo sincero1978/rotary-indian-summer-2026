@@ -652,16 +652,29 @@ function ChartsSection({ regs, isDark }: { regs: StoredRegistration[]; isDark: b
                     outerRadius={pieOuter}
                     paddingAngle={3}
                     dataKey="value"
+                    labelLine={false}
+                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }: {
+                      cx?: number; cy?: number; midAngle?: number;
+                      innerRadius?: number; outerRadius?: number; percent?: number;
+                    }) => {
+                      if ((percent ?? 0) < 0.05) return null;
+                      const rad = Math.PI / 180;
+                      const cxN = cx ?? 0, cyN = cy ?? 0, maN = midAngle ?? 0;
+                      const irN = innerRadius ?? 0, orN = outerRadius ?? 0;
+                      const r = irN + (orN - irN) * 0.5;
+                      const x = cxN + r * Math.cos(-maN * rad);
+                      const y = cyN + r * Math.sin(-maN * rad);
+                      return (
+                        <text x={x} y={y} textAnchor="middle" dominantBaseline="central"
+                          fill="rgba(20,45,32,0.95)" fontSize={labelSz} fontWeight={700}>
+                          {`${Math.round((percent ?? 0) * 100)}%`}
+                        </text>
+                      );
+                    }}
                   >
                     {revenueData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                    <LabelList
-                      dataKey="percent"
-                      position="inside"
-                      formatter={(v: unknown) => `${Math.round(((v as number) ?? 0) * 100)}%`}
-                      style={{ fill: "rgba(20,45,32,0.95)", fontSize: labelSz, fontWeight: 700 }}
-                    />
                   </Pie>
-                  <Tooltip {...pieTooltipStyle} formatter={(v) => [`€${v}`, ""]} />
+                  <Tooltip {...pieTooltipStyle} formatter={(v, name) => [`€${v}`, name]} />
                   <Legend
                     iconType="circle"
                     iconSize={8}
