@@ -59,9 +59,9 @@ async function withRedis<T>(fn: (client: ReturnType<typeof createClient>) => Pro
   const url = process.env.REDIS_URL!;
   const client = createClient({
     url,
-    socket: { reconnectStrategy: false },
+    socket: { reconnectStrategy: false, connectTimeout: 5000 },
   });
-  client.on("error", () => {}); // handled at call site
+  client.on("error", (err) => console.error("[admin-config] Redis client error:", err));
   await client.connect();
   try {
     return await fn(client);
