@@ -535,12 +535,23 @@ const PIE_TOOLTIP_STYLE = {
   contentStyle: { background: "#1e3528", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff", fontSize: 12 },
 };
 
+// Short menu names for the horizontal bar chart to fit narrow screens
+const MENU_SHORT: Record<string, string> = {
+  "1": "Wiener Schnitzel",
+  "2": "Cann. Bolognese",
+  "3": "Veg. Cannelloni",
+};
+
 function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
   const [period, setPeriod] = useState<TimePeriod>("day");
 
   const timeData    = buildTimeData(regs, period);
   const revenueData = buildRevenueData(regs);
-  const menuData    = buildMenuData(regs);
+  // Use short names for the bar chart
+  const menuData    = buildMenuData(regs).map((d) => ({
+    ...d,
+    name: MENU_SHORT[d.key] ?? d.name,
+  }));
 
   const PIE_COLORS = ["#52B788", "#95D5B2"];
   const BAR_COLORS = ["#52B788", "#74C69D", "#40916C"];
@@ -551,12 +562,15 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
 
   if (!hasTimeData && !hasRevenueData && !hasMenuData) return null;
 
+  // Pre-compute total for legend percentage display
+  const pieTotal = revenueData.reduce((s, d) => s + d.value, 0);
+
   return (
     <div className="mb-8 space-y-4">
       {/* ── Registrations over time ── */}
       {hasTimeData && (
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4 sm:mb-5 gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <BarChart2 size={16} className="text-sage" />
               <h3 className="text-white font-semibold text-sm">Registrations over time</h3>
@@ -566,7 +580,7 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
-                  className={`px-3.5 py-1 rounded-full text-xs font-semibold capitalize transition-[background-color,color] duration-200 ${
+                  className={`px-3 sm:px-3.5 py-1 rounded-full text-xs font-semibold capitalize transition-[background-color,color] duration-200 ${
                     period === p ? "bg-sage text-forest" : "text-white/50 hover:text-white"
                   }`}
                 >
@@ -575,12 +589,12 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
               ))}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={timeData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-              <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={timeData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+              <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip {...TOOLTIP_STYLE} formatter={(v) => [v, "Registrations"]} />
-              <Bar dataKey="count" fill={CHART_COLORS.bar} radius={[4, 4, 0, 0]} maxBarSize={48} />
+              <Bar dataKey="count" fill={CHART_COLORS.bar} radius={[4, 4, 0, 0]} maxBarSize={44} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -588,22 +602,21 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
 
       {/* ── Revenue + Meals row ── */}
       {(hasRevenueData || hasMenuData) && (
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-          {/* Revenue pie */}
+          {/* Revenue donut — no inline labels (they clip on narrow screens).
+              Percentages are shown in the custom Legend instead. */}
           {hasRevenueData && (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <h3 className="text-white font-semibold text-sm mb-4">Revenue breakdown</h3>
-              <ResponsiveContainer width="100%" height={220}>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5">
+              <h3 className="text-white font-semibold text-sm mb-3">Revenue breakdown</h3>
+              <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
                     data={revenueData}
-                    cx="50%" cy="45%"
-                    innerRadius={55} outerRadius={85}
+                    cx="50%" cy="42%"
+                    innerRadius={52} outerRadius={78}
                     paddingAngle={3}
                     dataKey="value"
-                    label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                    labelLine={false}
                   >
                     {revenueData.map((_, i) => (
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
@@ -611,24 +624,51 @@ function ChartsSection({ regs }: { regs: StoredRegistration[] }) {
                   </Pie>
                   <Tooltip {...PIE_TOOLTIP_STYLE} formatter={(v) => [`€${v}`, ""]} />
                   <Legend
-                    iconType="circle" iconSize={8}
-                    formatter={(v) => <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{v}</span>}
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(value, entry) => {
+                      const pct = pieTotal > 0
+                        ? Math.round(((entry as { payload?: { value: number } }).payload?.value ?? 0) / pieTotal * 100)
+                        : 0;
+                      return (
+                        <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11 }}>
+                          {value} <span style={{ color: "rgba(255,255,255,0.45)" }}>{pct}%</span>
+                        </span>
+                      );
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           )}
 
-          {/* Menus bar chart */}
+          {/* Menus horizontal bar chart */}
           {hasMenuData && (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <h3 className="text-white font-semibold text-sm mb-4">Meals by menu</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={menuData} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }}>
-                  <XAxis type="number" allowDecimals={false} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" width={160} tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }} axisLine={false} tickLine={false} />
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5">
+              <h3 className="text-white font-semibold text-sm mb-3">Meals by menu</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart
+                  data={menuData}
+                  layout="vertical"
+                  margin={{ top: 4, right: 20, left: 4, bottom: 0 }}
+                >
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                    tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={120}
+                    tick={{ fill: "rgba(255,255,255,0.65)", fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <Tooltip {...TOOLTIP_STYLE} formatter={(v) => [v, "Orders"]} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={32}>
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={28}>
                     {menuData.map((_, i) => (
                       <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
                     ))}
