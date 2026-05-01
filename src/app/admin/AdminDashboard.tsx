@@ -1053,123 +1053,115 @@ export default function AdminDashboard({
           </div>
         ) : (() => {
           const hasExtras = regs.some((r) => r.extraParticipants > 0);
+          const thCls = `px-3 py-2.5 text-left text-[10px] sm:text-xs font-semibold tracking-[0.1em] uppercase whitespace-nowrap ${t("text-white/50", "text-gray-500")}`;
           return (
           <div className={`border rounded-2xl overflow-hidden ${t("bg-white/5 border-white/10", "bg-white border-gray-200 shadow-sm")}`}>
-            <table className="w-full table-fixed text-sm">
-              <colgroup>
-                <col style={{ width: hasExtras ? "13%" : "14%" }} />{/* Reference */}
-                <col style={{ width: "5%" }} />                       {/* Paid */}
-                <col style={{ width: hasExtras ? "10%" : "11%" }} />{/* Date */}
-                <col style={{ width: hasExtras ? "13%" : "14%" }} />{/* Driver */}
-                <col style={{ width: hasExtras ? "14%" : "16%" }} />{/* Email */}
-                <col style={{ width: hasExtras ? "12%" : "13%" }} />{/* Car */}
-                {hasExtras && <col style={{ width: "5%" }} />}       {/* Extras */}
-                <col style={{ width: hasExtras ? "16%" : "17%" }} />{/* Meals */}
-                <col style={{ width: "5%" }} />                      {/* Total */}
-                <col style={{ width: "4%" }} />                      {/* Lang */}
-                <col style={{ width: "3%" }} />                      {/* Delete */}
-              </colgroup>
-              <thead>
-                <tr className={`border-b ${t("border-white/10 bg-white/5", "border-gray-200 bg-gray-50")}`}>
-                  {["Reference", "Paid", "Date", "Driver / Co-pilot", "Email", "Car", ...(hasExtras ? ["Extras"] : []), "Meals", "Total", "Lang", ""].map((h) => (
-                    <th key={h} className={`px-2 sm:px-3 py-2.5 sm:py-3 text-left text-[9px] sm:text-[10px] font-semibold tracking-[0.1em] uppercase ${t("text-white/50", "text-gray-500")}`}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className={`divide-y ${t("divide-white/8", "divide-gray-100")}`}>
-                {regs.map((r) => (
-                  <tr key={r.id} className={`transition-colors ${t("hover:bg-white/5", "hover:bg-gray-50")}`}>
-                    {/* Reference */}
-                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 font-mono text-sage text-[9px] sm:text-[10px] overflow-hidden">
-                      <span className="block truncate">{r.reference}</span>
-                    </td>
-                    {/* Paid */}
-                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 text-center">
-                      <button
-                        onClick={() => togglePaid(r.id, r.paid ?? false)}
-                        disabled={paidUpdating.has(r.id)}
-                        title={r.paid ? "Mark as unpaid" : "Mark as paid"}
-                        className="inline-flex items-center justify-center w-5 h-5 rounded-full transition-all duration-200 disabled:opacity-40"
-                      >
-                        {r.paid ? (
-                          <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
-                            <circle cx="10" cy="10" r="9" fill="#52B788" />
-                            <path d="M6 10l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+            <div className="overflow-x-auto">
+              <table className="text-xs border-collapse" style={{ minWidth: hasExtras ? 960 : 880 }}>
+                <thead>
+                  <tr className={`border-b ${t("border-white/10 bg-white/5", "border-gray-200 bg-gray-50")}`}>
+                    <th className={thCls}>Reference</th>
+                    <th className={thCls}>Paid</th>
+                    <th className={thCls}>Date</th>
+                    <th className={thCls}>Driver / Co-pilot</th>
+                    <th className={thCls}>Email</th>
+                    <th className={thCls}>Car</th>
+                    {hasExtras && <th className={thCls}>Extras</th>}
+                    <th className={thCls}>Meals</th>
+                    <th className={thCls}>Total</th>
+                    <th className={thCls}>Lang</th>
+                    <th className={thCls}></th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${t("divide-white/8", "divide-gray-100")}`}>
+                  {regs.map((r) => (
+                    <tr key={r.id} className={`transition-colors ${t("hover:bg-white/5", "hover:bg-gray-50")}`}>
+                      {/* Reference */}
+                      <td className="px-3 py-3 font-mono text-sage text-[10px] sm:text-xs whitespace-nowrap">{r.reference}</td>
+                      {/* Paid */}
+                      <td className="px-3 py-3 text-center">
+                        <button
+                          onClick={() => togglePaid(r.id, r.paid ?? false)}
+                          disabled={paidUpdating.has(r.id)}
+                          title={r.paid ? "Mark as unpaid" : "Mark as paid"}
+                          className="inline-flex items-center justify-center w-5 h-5 rounded-full transition-all duration-200 disabled:opacity-40"
+                        >
+                          {r.paid ? (
+                            <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
+                              <circle cx="10" cy="10" r="9" fill="#52B788" />
+                              <path d="M6 10l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
+                              <circle cx="10" cy="10" r="9" stroke={isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)"} strokeWidth="1.5" />
+                            </svg>
+                          )}
+                        </button>
+                      </td>
+                      {/* Date */}
+                      <td className={`px-3 py-3 whitespace-nowrap text-[10px] sm:text-xs ${t("text-white/50", "text-gray-400")}`}>{formatDate(r.submittedAt)}</td>
+                      {/* Driver / Co-pilot */}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div className={`text-[10px] sm:text-xs font-medium ${t("text-white", "text-gray-900")}`}>{r.driverName}</div>
+                        <div className={`text-[10px] sm:text-xs ${t("text-white/50", "text-gray-500")}`}>{r.copilotName}</div>
+                        {r.extraNames.map((n) => (
+                          <div key={n} className={`text-[10px] sm:text-xs ${t("text-white/40", "text-gray-400")}`}>+{n}</div>
+                        ))}
+                      </td>
+                      {/* Email */}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <a href={`mailto:${r.email}`} className={`text-[10px] sm:text-xs hover:text-sage transition-colors ${t("text-white/60", "text-gray-600")}`}>{r.email}</a>
+                        <div className={`text-[10px] sm:text-xs mt-0.5 ${t("text-white/30", "text-gray-400")}`}>{r.phone}</div>
+                      </td>
+                      {/* Car */}
+                      <td className={`px-3 py-3 whitespace-nowrap ${t("text-white/70", "text-gray-700")}`}>
+                        <div className="text-[10px] sm:text-xs">{r.carMake} {r.carModel}</div>
+                        <div className={`text-[10px] sm:text-xs ${t("text-white/30", "text-gray-400")}`}>{r.carYear}</div>
+                      </td>
+                      {/* Extras (conditional) */}
+                      {hasExtras && (
+                        <td className="px-3 py-3 text-center whitespace-nowrap">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${
+                            r.extraParticipants > 0 ? "bg-sage/15 text-sage" : t("text-white/30", "text-gray-400")
+                          }`}>
+                            {r.extraParticipants > 0 ? `+${r.extraParticipants}` : "—"}
+                          </span>
+                        </td>
+                      )}
+                      {/* Meals */}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {r.mealChoices.filter((m) => m.include).length > 0 ? (
+                          <div className="space-y-0.5">
+                            {r.mealChoices.map((m, i) => m.include && (
+                              <div key={i} className={`text-[10px] sm:text-xs ${t("text-white/60", "text-gray-600")}`}>
+                                {i === 0 ? r.driverName : i === 1 ? r.copilotName : r.extraNames[i - 2] || `P${i + 1}`}: M{m.menu}
+                              </div>
+                            ))}
+                          </div>
                         ) : (
-                          <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none">
-                            <circle cx="10" cy="10" r="9" stroke={isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)"} strokeWidth="1.5" />
-                          </svg>
+                          <span className={`text-[10px] sm:text-xs ${t("text-white/25", "text-gray-400")}`}>—</span>
                         )}
-                      </button>
-                    </td>
-                    {/* Date */}
-                    <td className={`px-2 sm:px-3 py-2.5 sm:py-3 text-[9px] sm:text-[10px] overflow-hidden ${t("text-white/50", "text-gray-400")}`}>
-                      <span className="block truncate">{formatDate(r.submittedAt)}</span>
-                    </td>
-                    {/* Driver / Co-pilot */}
-                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 overflow-hidden">
-                      <div className={`text-[9px] sm:text-[10px] font-medium truncate ${t("text-white", "text-gray-900")}`}>{r.driverName}</div>
-                      <div className={`text-[9px] sm:text-[10px] truncate ${t("text-white/50", "text-gray-500")}`}>{r.copilotName}</div>
-                      {r.extraNames.map((n) => (
-                        <div key={n} className={`text-[9px] sm:text-[10px] truncate ${t("text-white/40", "text-gray-400")}`}>+{n}</div>
-                      ))}
-                    </td>
-                    {/* Email */}
-                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 overflow-hidden">
-                      <a href={`mailto:${r.email}`} className={`text-[9px] sm:text-[10px] block truncate hover:text-sage transition-colors ${t("text-white/60", "text-gray-600")}`}>{r.email}</a>
-                      <div className={`text-[9px] sm:text-[10px] truncate mt-0.5 ${t("text-white/30", "text-gray-400")}`}>{r.phone}</div>
-                    </td>
-                    {/* Car */}
-                    <td className={`px-2 sm:px-3 py-2.5 sm:py-3 overflow-hidden ${t("text-white/70", "text-gray-700")}`}>
-                      <div className="text-[9px] sm:text-[10px] truncate">{r.carMake} {r.carModel}</div>
-                      <div className={`text-[9px] sm:text-[10px] ${t("text-white/30", "text-gray-400")}`}>{r.carYear}</div>
-                    </td>
-                    {/* Extras (conditional) */}
-                    {hasExtras && (
-                      <td className="px-2 sm:px-3 py-2.5 sm:py-3 text-center">
-                        <span className={`inline-block px-1 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium ${
-                          r.extraParticipants > 0 ? "bg-sage/15 text-sage" : t("text-white/30", "text-gray-400")
-                        }`}>
-                          {r.extraParticipants > 0 ? `+${r.extraParticipants}` : "—"}
+                      </td>
+                      {/* Total */}
+                      <td className={`px-3 py-3 text-xs font-bold whitespace-nowrap ${t("text-white", "text-gray-900")}`}>€{r.total}</td>
+                      {/* Lang */}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <span className={`inline-block text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded ${t("bg-white/8 text-white/50", "bg-gray-100 text-gray-500")}`}>
+                          {LANG_LABELS[r.lang] ?? r.lang}
                         </span>
                       </td>
-                    )}
-                    {/* Meals */}
-                    <td className="px-2 sm:px-3 py-2.5 sm:py-3 overflow-hidden">
-                      {r.mealChoices.filter((m) => m.include).length > 0 ? (
-                        <div className="space-y-0.5">
-                          {r.mealChoices.map((m, i) => m.include && (
-                            <div key={i} className={`text-[9px] sm:text-[10px] truncate ${t("text-white/60", "text-gray-600")}`}>
-                              {i === 0 ? r.driverName : i === 1 ? r.copilotName : r.extraNames[i - 2] || `P${i + 1}`}: M{m.menu}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className={`text-[9px] sm:text-[10px] ${t("text-white/25", "text-gray-400")}`}>—</span>
-                      )}
-                    </td>
-                    {/* Total */}
-                    <td className={`px-2 sm:px-3 py-2.5 sm:py-3 text-[9px] sm:text-[10px] font-bold whitespace-nowrap ${t("text-white", "text-gray-900")}`}>€{r.total}</td>
-                    {/* Lang */}
-                    <td className="px-2 sm:px-3 py-2.5 sm:py-3">
-                      <span className={`inline-block text-[9px] sm:text-[10px] font-medium px-1 py-0.5 rounded ${t("bg-white/8 text-white/50", "bg-gray-100 text-gray-500")}`}>
-                        {LANG_LABELS[r.lang] ?? r.lang}
-                      </span>
-                    </td>
-                    {/* Delete */}
-                    <td className="px-1 sm:px-2 py-2.5 sm:py-3">
-                      <button onClick={() => setDeleteId(r.id)}
-                        className="w-6 h-6 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-400/15 transition-colors duration-200">
-                        <Trash2 size={11} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      {/* Delete */}
+                      <td className="px-3 py-3">
+                        <button onClick={() => setDeleteId(r.id)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-400/15 transition-colors duration-200">
+                          <Trash2 size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
           );
         })()}
