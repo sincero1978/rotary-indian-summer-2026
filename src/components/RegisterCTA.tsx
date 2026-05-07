@@ -9,9 +9,11 @@ import {
   Building2,
   CheckCircle,
   Loader2,
+  ShieldCheck,
 } from "lucide-react";
 import { useLang } from "@/lib/i18n/LanguageContext";
 import { t } from "@/lib/i18n/translations";
+import GdprModal from "@/components/GdprModal";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -110,6 +112,7 @@ export default function RegisterCTA() {
   const [reference, setReference] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [showGdpr, setShowGdpr] = useState(false);
 
   // ── Derived values ──────────────────────────────────────────────────────────
 
@@ -229,6 +232,8 @@ export default function RegisterCTA() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
+    <>
+    {showGdpr && <GdprModal onClose={() => setShowGdpr(false)} />}
     <section id="register" className="relative py-24 lg:py-32 overflow-hidden">
       <div className="absolute inset-0 z-0">
         <Image src="/moselle-tour.avif" alt="Moselle Valley" fill className="object-cover" sizes="100vw" />
@@ -428,6 +433,22 @@ export default function RegisterCTA() {
                     <span className="font-heading text-white text-3xl font-bold">€{total}</span>
                   </div>
                 </div>
+                {/* GDPR notice */}
+                <div className="flex items-start gap-2.5 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                  <ShieldCheck size={15} className="text-sage flex-shrink-0 mt-0.5" />
+                  <p className="text-white/50 text-xs leading-relaxed">
+                    {t[lang].gdpr.notice}{" "}
+                    <button
+                      type="button"
+                      onClick={() => setShowGdpr(true)}
+                      className="text-sage underline underline-offset-2 hover:text-sage-light transition-colors focus-visible:outline-none focus-visible:text-sage-light"
+                    >
+                      {t[lang].gdpr.noticeLink}
+                    </button>
+                    .
+                  </p>
+                </div>
+
                 <button onClick={handleSubmit} disabled={loading}
                   className="w-full py-3.5 rounded-full bg-sage text-forest font-semibold text-sm text-center hover:bg-sage-light active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-[background-color,transform,opacity] duration-200 shadow-[0_8px_32px_rgba(82,183,136,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage flex items-center justify-center gap-2">
                   {loading ? (
@@ -516,5 +537,6 @@ export default function RegisterCTA() {
         </div>
       </div>
     </section>
+    </>
   );
 }

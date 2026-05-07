@@ -1,14 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLang } from "@/lib/i18n/LanguageContext";
 import { t } from "@/lib/i18n/translations";
+import GdprModal from "@/components/GdprModal";
 
 export default function Footer() {
   const { lang } = useLang();
   const tr = t[lang].footer;
   const navTr = t[lang].nav;
+  const [showGdpr, setShowGdpr] = useState(false);
 
   const navLinks = [
     { label: navTr.about, href: "#about" },
@@ -18,6 +21,8 @@ export default function Footer() {
   ];
 
   return (
+    <>
+    {showGdpr && <GdprModal onClose={() => setShowGdpr(false)} />}
     <footer id="contact" className="bg-[#1a2e24] text-white">
       <div className="border-b border-white/8 py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 grid md:grid-cols-5 gap-12">
@@ -98,11 +103,17 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-6 lg:px-10 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-white/30 text-xs">{tr.rights}</p>
           <div className="flex gap-6">
-            <Link href="#" className="text-white/30 text-xs hover:text-sage/70 transition-colors focus-visible:outline-none">{tr.privacy}</Link>
+            <button
+              onClick={() => setShowGdpr(true)}
+              className="text-white/30 text-xs hover:text-sage/70 transition-colors focus-visible:outline-none focus-visible:text-sage/70"
+            >
+              {tr.privacy}
+            </button>
             <Link href="#" className="text-white/30 text-xs hover:text-sage/70 transition-colors focus-visible:outline-none">{tr.terms}</Link>
           </div>
         </div>
       </div>
     </footer>
+    </>
   );
 }
