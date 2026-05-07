@@ -374,6 +374,7 @@ export default function RegisterCTA() {
 
               {/* Meal options */}
               <div>
+                <p className="text-white/80 text-sm font-medium mb-3 italic">{tr.mealParticipate}</p>
                 <h4 className="text-white font-semibold text-base mb-1 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-sage/20 text-sage text-xs font-bold flex items-center justify-center">4</span>
                   {tr.step4}
