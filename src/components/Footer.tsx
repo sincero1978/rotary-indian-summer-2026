@@ -109,7 +109,6 @@ export default function Footer() {
             >
               {tr.privacy}
             </button>
-            <Link href="#" className="text-white/30 text-xs hover:text-sage/70 transition-colors focus-visible:outline-none">{tr.terms}</Link>
           </div>
         </div>
       </div>
