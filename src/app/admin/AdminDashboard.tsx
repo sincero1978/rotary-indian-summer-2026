@@ -942,12 +942,14 @@ export default function AdminDashboard({
     if (!deleteId) return;
     setDeleting(true);
     try {
-      await fetch("/api/admin/registrations", {
+      const res = await fetch("/api/admin/registrations", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: deleteId }),
       });
-      setRegs((p) => p.filter((r) => r.id !== deleteId));
+      if (res.ok) {
+        setRegs((p) => p.filter((r) => r.id !== deleteId));
+      }
     } finally {
       setDeleting(false);
       setDeleteId(null);
