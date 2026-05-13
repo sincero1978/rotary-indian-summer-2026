@@ -35,6 +35,7 @@ export default function Footer() {
                 width={1184}
                 height={621}
                 className="w-48 sm:w-56 h-auto object-contain"
+                unoptimized
               />
             </div>
             {tr.tagline && <p className="text-white/55 text-sm leading-[1.8] max-w-xs">{tr.tagline}</p>}

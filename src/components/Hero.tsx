@@ -49,6 +49,7 @@ export default function Hero() {
             height={621}
             className="h-[171px] sm:h-[229px] w-auto object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
             priority
+            unoptimized
           />
         </div>
 
