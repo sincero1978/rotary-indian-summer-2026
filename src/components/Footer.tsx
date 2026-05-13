@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="md:col-span-2 lg:col-span-2">
             <div className="mb-5">
               <Image
-                src="/rally-logo.png"
+                src="/rally-logo.jpg"
                 alt="Rotary Indian Summer Tour 2026"
                 width={1184}
                 height={621}
