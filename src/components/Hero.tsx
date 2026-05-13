@@ -43,13 +43,12 @@ export default function Hero() {
       <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center pt-20 sm:pt-24 pb-10 sm:pb-0">
         <div className="mb-5 sm:mb-8">
           <Image
-            src="/rally-logo.jpg"
+            src="/rally-logo.png"
             alt="9th Rotary Indian Summer Classic & Sports Cars Tour 2026"
             width={1184}
             height={621}
             className="h-[171px] sm:h-[229px] w-auto object-contain drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
             priority
-            unoptimized
           />
         </div>
 

@@ -962,7 +962,7 @@ export default function AdminDashboard({
       {/* ── Navbar ── */}
       <header className={`border-b px-6 lg:px-10 py-3 flex items-center justify-between gap-4 ${t("bg-[#152619] border-white/8", "bg-white border-gray-200 shadow-sm")}`}>
         <div className="flex items-center gap-4">
-          <Image src="/rally-logo.jpg" alt="RIST 2026" width={1184} height={621} className="h-14 sm:h-20 lg:h-24 w-auto" unoptimized />
+          <Image src="/rally-logo.png" alt="RIST 2026" width={1184} height={621} className="h-14 sm:h-20 lg:h-24 w-auto" />
           <div className={`hidden sm:block h-5 w-px ${t("bg-white/20", "bg-gray-300")}`} />
           <span className={`hidden sm:block text-[10px] lg:text-xs tracking-[0.2em] uppercase ${t("text-white/50", "text-gray-400")}`}>Staff Portal</span>
         </div>

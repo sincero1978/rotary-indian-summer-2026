@@ -30,12 +30,11 @@ export default function Footer() {
           <div className="md:col-span-2 lg:col-span-2">
             <div className="mb-5">
               <Image
-                src="/rally-logo.jpg"
+                src="/rally-logo.png"
                 alt="Rotary Indian Summer Tour 2026"
                 width={1184}
                 height={621}
                 className="w-48 sm:w-56 h-auto object-contain"
-                unoptimized
               />
             </div>
             {tr.tagline && <p className="text-white/55 text-sm leading-[1.8] max-w-xs">{tr.tagline}</p>}
