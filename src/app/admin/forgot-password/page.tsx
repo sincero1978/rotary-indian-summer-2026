@@ -49,7 +49,7 @@ export default function ForgotPassword() {
       <div className="relative z-10 w-full max-w-sm px-6">
         <div className="text-center mb-8">
           <Image
-            src="/rally-logo.png"
+            src="/rally-logo-v2.png"
             alt="Rotary Indian Summer Tour 2026"
             width={1184}
             height={621}

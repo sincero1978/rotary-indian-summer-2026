@@ -43,7 +43,7 @@ export default function Hero() {
       <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center pt-20 sm:pt-24 pb-10 sm:pb-0">
         <div className="mb-5 sm:mb-8">
           <Image
-            src="/rally-logo.png"
+            src="/rally-logo-v2.png"
             alt="9th Rotary Indian Summer Classic & Sports Cars Tour 2026"
             width={1184}
             height={621}
