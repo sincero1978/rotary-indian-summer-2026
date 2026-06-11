@@ -49,7 +49,7 @@ export const t = {
         {
           title: "Spectacular Landscapes",
           body: "Drive during the golden autumn through the west of Luxembourg with its warm colours and after each turn, admire the beauty of the country.",
-          accent: "130 km of scenic roads",
+          accent: "150 km of scenic roads",
         },
         {
           title: "One-Day Rally",
@@ -256,7 +256,7 @@ export const t = {
         {
           title: "Paysages spectaculaires",
           body: "Conduisez durant l\u2019automne dor\u00e9 \u00e0 travers l\u2019ouest du Luxembourg avec ses chaudes couleurs, et apr\u00e8s chaque virage, admirez la beaut\u00e9 du pays.",
-          accent: "130 km de routes sc\u00e9niques",
+          accent: "150 km de routes sc\u00e9niques",
         },
         {
           title: "Rallye d\u2019une journ\u00e9e",
@@ -463,7 +463,7 @@ export const t = {
         {
           title: "Spektakul\u00e4r Landschaften",
           body: "Fuert am g\u00ebllene Hierscht duerch de Westen vun L\u00ebtzeb\u00fcerg mat sengen waarme Faarwen, an losst no all K\u00e9ier d\u2019Sch\u00e9inheet vum Land op Iech.",
-          accent: "130 km Panoramastroosse",
+          accent: "150 km Panoramastroosse",
         },
         {
           title: "Eendags-Rallye",

@@ -45,7 +45,7 @@ export default function RouteSection() {
           <h2 className="font-heading text-forest text-4xl sm:text-5xl font-bold tracking-[-0.02em] leading-tight">
             Three Days,
             <br />
-            <em className="not-italic text-sage">130 Kilometres</em>
+            <em className="not-italic text-sage">150 Kilometres</em>
           </h2>
           <p className="text-warm-gray text-lg leading-[1.8] lg:pt-2 self-end">
             Each stage is hand-picked for its scenic beauty and road quality —

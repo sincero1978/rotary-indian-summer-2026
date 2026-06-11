@@ -66,7 +66,7 @@ export default function About() {
             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-border">
               {[
                 { value: "1", label: tr.stat1Label, sub: tr.stat1Sub },
-                { value: "130", label: tr.stat2Label, sub: tr.stat2Sub },
+                { value: "150", label: tr.stat2Label, sub: tr.stat2Sub },
                 { value: "60+", label: tr.stat3Label, sub: tr.stat3Sub },
               ].map(({ value, label, sub }) => (
                 <div key={label}>
