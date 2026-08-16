@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 import {
   LogOut, Plus, Trash2, X, Users, Euro, UtensilsCrossed,
   Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronUp, RefreshCw,
-  KeyRound, Eye, EyeOff, Printer, BarChart2, Sun, Moon,
+  KeyRound, Eye, EyeOff, Printer, BarChart2, Sun, Moon, FileSpreadsheet,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LabelList,
 } from "recharts";
 import type { StoredRegistration } from "@/lib/admin-types";
+import type * as ExcelJS from "exceljs";
 
 // ─── Responsive width hook ────────────────────────────────────────────────────
 // Used to scale chart fonts and conditionally show/hide chart labels.
@@ -861,6 +862,275 @@ function printRegistrations(regs: StoredRegistration[]) {
   win.print();
 }
 
+// ─── Excel export ─────────────────────────────────────────────────────────────
+
+async function exportToExcel(regs: StoredRegistration[]) {
+  const ExcelJS = (await import("exceljs")).default;
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "Rotary Indian Summer Tour 2026";
+  wb.created = new Date();
+
+  const FOREST  = "FF2D6A4F";
+  const SAGE    = "FF52B788";
+  const CREAM   = "FFF8FCF9";
+  const WHITE   = "FFFFFFFF";
+  const GRAY200 = "FFE5E7EB";
+  const GRAY500 = "FF6B7280";
+  const RED     = "FFDC2626";
+
+  const MENU_NAMES: Record<string, string> = {
+    "1": "Menu 1 — Wiener Schnitzel",
+    "2": "Menu 2 — Cannelloni Bolognese",
+    "3": "Menu 3 — Vegetarian Cannelloni",
+  };
+
+  const totalRevenue = regs.reduce((s, r) => s + r.total, 0);
+  const totalMeals   = regs.reduce((s, r) => s + r.mealChoices.filter((m) => m.include).length, 0);
+  const totalPeople  = regs.reduce((s, r) => s + 2 + r.extraParticipants, 0);
+  const totalPaid    = regs.filter((r) => r.paid).length;
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+  const headerFont  = { bold: true, color: { argb: WHITE }, size: 10, name: "Arial" } as const;
+  const bodyFont    = { size: 10, name: "Arial" } as const;
+  const thinBorder  = { style: "thin" as const, color: { argb: GRAY200 } };
+  const cellBorder  = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+
+  function hdr(ws: ExcelJS.Worksheet, row: number, col: number, value: string) {
+    const c = ws.getCell(row, col);
+    c.value = value;
+    c.font  = headerFont;
+    c.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: FOREST } };
+    c.alignment = { vertical: "middle", horizontal: "center", wrapText: false };
+    c.border = cellBorder;
+  }
+
+  function body(ws: ExcelJS.Worksheet, row: number, col: number, value: ExcelJS.CellValue, even: boolean, opts?: Partial<ExcelJS.Style>) {
+    const c = ws.getCell(row, col);
+    c.value = value;
+    c.font  = { ...bodyFont, ...(opts?.font as object ?? {}) };
+    c.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: even ? CREAM : WHITE } };
+    c.alignment = { vertical: "middle", wrapText: false, ...(opts?.alignment ?? {}) };
+    c.border = cellBorder;
+    if (opts?.numFmt) c.numFmt = opts.numFmt as string;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Sheet 1 — Summary
+  // ═══════════════════════════════════════════════════════════════════════════
+  const ws1 = wb.addWorksheet("Summary", { views: [{ showGridLines: false }] });
+  ws1.columns = [{ width: 30 }, { width: 20 }, { width: 20 }, { width: 20 }, { width: 20 }];
+
+  // Title block
+  ws1.mergeCells("A1:E1");
+  const title = ws1.getCell("A1");
+  title.value = "Rotary Indian Summer Tour 2026 — Staff Summary";
+  title.font  = { bold: true, size: 16, color: { argb: FOREST }, name: "Arial" };
+  title.alignment = { vertical: "middle", horizontal: "left" };
+  ws1.getRow(1).height = 36;
+
+  ws1.mergeCells("A2:E2");
+  const sub = ws1.getCell("A2");
+  sub.value = `Exported ${new Date().toLocaleString("en-GB", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}  ·  Rotary Club Bascharage-Kordall`;
+  sub.font  = { size: 10, color: { argb: GRAY500 }, name: "Arial" };
+  sub.alignment = { vertical: "middle" };
+  ws1.getRow(2).height = 20;
+
+  ws1.getRow(3).height = 10;
+
+  // KPI header row
+  const kpiLabels = ["Registrations", "Participants", "Meals Ordered", "Payments Received", "Total Revenue"];
+  kpiLabels.forEach((lbl, i) => hdr(ws1, 4, i + 1, lbl));
+  ws1.getRow(4).height = 22;
+
+  // KPI value row
+  const kpiVals: ExcelJS.CellValue[] = [
+    regs.length,
+    totalPeople,
+    totalMeals,
+    `${totalPaid} / ${regs.length}`,
+    totalRevenue,
+  ];
+  kpiVals.forEach((val, i) => {
+    const c = ws1.getCell(5, i + 1);
+    c.value = val;
+    c.font  = { bold: true, size: 18, color: { argb: FOREST }, name: "Arial" };
+    c.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: CREAM } };
+    c.alignment = { vertical: "middle", horizontal: "center" };
+    c.border = cellBorder;
+    if (i === 4) c.numFmt = "€#,##0";
+  });
+  ws1.getRow(5).height = 36;
+
+  ws1.getRow(6).height = 16;
+
+  // Payment breakdown sub-header
+  ws1.mergeCells("A7:B7");
+  const payHdr = ws1.getCell("A7");
+  payHdr.value = "Payment Breakdown";
+  payHdr.font  = { bold: true, size: 11, color: { argb: WHITE }, name: "Arial" };
+  payHdr.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: SAGE } };
+  payHdr.alignment = { vertical: "middle" };
+  payHdr.border = cellBorder;
+  ws1.getRow(7).height = 20;
+
+  [["Paid", totalPaid], ["Unpaid", regs.length - totalPaid]].forEach(([lbl, val], i) => {
+    const r = 8 + i;
+    const c1 = ws1.getCell(r, 1);
+    c1.value = lbl;
+    c1.font  = { size: 10, name: "Arial", bold: true, color: { argb: i === 0 ? FOREST : RED } };
+    c1.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: i % 2 === 0 ? CREAM : WHITE } };
+    c1.alignment = { vertical: "middle" };
+    c1.border = cellBorder;
+    const c2 = ws1.getCell(r, 2);
+    c2.value = val as number;
+    c2.font  = { size: 10, name: "Arial", bold: true, color: { argb: i === 0 ? FOREST : RED } };
+    c2.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: i % 2 === 0 ? CREAM : WHITE } };
+    c2.alignment = { vertical: "middle", horizontal: "center" };
+    c2.border = cellBorder;
+    ws1.getRow(r).height = 18;
+  });
+
+  ws1.getRow(10).height = 16;
+
+  // Meal breakdown sub-header
+  ws1.mergeCells("A11:B11");
+  const mealHdr = ws1.getCell("A11");
+  mealHdr.value = "Meal Breakdown";
+  mealHdr.font  = { bold: true, size: 11, color: { argb: WHITE }, name: "Arial" };
+  mealHdr.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: SAGE } };
+  mealHdr.alignment = { vertical: "middle" };
+  mealHdr.border = cellBorder;
+  ws1.getRow(11).height = 20;
+
+  const mealCounts: Record<string, number> = {};
+  regs.forEach((r) => r.mealChoices.forEach((m) => { if (m.include) mealCounts[m.menu] = (mealCounts[m.menu] ?? 0) + 1; }));
+  Object.entries(MENU_NAMES).forEach(([key, name], i) => {
+    const r = 12 + i;
+    const c1 = ws1.getCell(r, 1);
+    c1.value = name;
+    c1.font  = { size: 10, name: "Arial" };
+    c1.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: i % 2 === 0 ? CREAM : WHITE } };
+    c1.alignment = { vertical: "middle" };
+    c1.border = cellBorder;
+    const c2 = ws1.getCell(r, 2);
+    c2.value = mealCounts[key] ?? 0;
+    c2.font  = { size: 10, name: "Arial", bold: true, color: { argb: FOREST } };
+    c2.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: i % 2 === 0 ? CREAM : WHITE } };
+    c2.alignment = { vertical: "middle", horizontal: "center" };
+    c2.border = cellBorder;
+    ws1.getRow(r).height = 18;
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Sheet 2 — Registrations
+  // ═══════════════════════════════════════════════════════════════════════════
+  const ws2 = wb.addWorksheet("Registrations", { views: [{ showGridLines: false, state: "frozen", ySplit: 2 }] });
+
+  const hasExtras = regs.some((r) => r.extraParticipants > 0);
+  const baseCols = [
+    { header: "Reference",   key: "ref",      width: 16 },
+    { header: "Paid",        key: "paid",     width: 10 },
+    { header: "Date",        key: "date",     width: 14 },
+    { header: "Driver",      key: "driver",   width: 22 },
+    { header: "Co-Pilot",    key: "copilot",  width: 22 },
+    { header: "Email",       key: "email",    width: 28 },
+    { header: "Phone",       key: "phone",    width: 16 },
+    { header: "Car",         key: "car",      width: 22 },
+    { header: "Year",        key: "year",     width: 8  },
+  ] as const;
+  const extraCols = hasExtras ? [{ header: "Extra Participants", key: "extras", width: 18 }] : [];
+  const tailCols = [
+    { header: "Meal — Driver",   key: "meal0", width: 28 },
+    { header: "Meal — Co-Pilot", key: "meal1", width: 28 },
+    ...(hasExtras ? [{ header: "Meal — Extra 1", key: "meal2", width: 28 }, { header: "Meal — Extra 2", key: "meal3", width: 28 }] : []),
+    { header: "Total (€)",       key: "total", width: 12 },
+  ];
+  ws2.columns = [...baseCols, ...extraCols, ...tailCols].map((c) => ({ header: c.header, key: c.key, width: c.width }));
+
+  // Title row
+  const colCount = ws2.columns.length;
+  ws2.mergeCells(1, 1, 1, colCount);
+  const reg_title = ws2.getCell(1, 1);
+  reg_title.value = "RIST 2026 — Registration List";
+  reg_title.font  = { bold: true, size: 13, color: { argb: WHITE }, name: "Arial" };
+  reg_title.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: FOREST } };
+  reg_title.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
+  ws2.getRow(1).height = 28;
+
+  // Column header row
+  ws2.columns.forEach((_, i) => hdr(ws2, 2, i + 1, (ws2.getColumn(i + 1) as ExcelJS.Column & { header: string }).header ?? ""));
+  ws2.getRow(2).height = 22;
+
+  // Data rows
+  regs.forEach((r, idx) => {
+    const even   = idx % 2 === 0;
+    const rowNum = idx + 3;
+    const bg = { fill: { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: even ? CREAM : WHITE } } };
+
+    const meals = r.mealChoices.map((m) => m.include ? (MENU_NAMES[m.menu] ?? m.menu) : "No meal");
+    const extras = hasExtras ? [r.extraParticipants > 0 ? `+${r.extraParticipants} (${r.extraNames.join(", ")})` : "—"] : [];
+
+    const values: ExcelJS.CellValue[] = [
+      r.reference,
+      r.paid ? "✓ Paid" : "Unpaid",
+      new Date(r.submittedAt),
+      r.driverName,
+      r.copilotName,
+      r.email,
+      r.phone,
+      `${r.carMake} ${r.carModel}`,
+      r.carYear,
+      ...extras,
+      ...[0, 1, 2, 3].slice(0, baseCols.length + extraCols.length + tailCols.length - baseCols.length - extraCols.length - 1).map((mi) => meals[mi] ?? "—"),
+      r.total,
+    ];
+
+    values.forEach((val, ci) => {
+      const isPaid   = ci === 1;
+      const isTotal  = ci === values.length - 1;
+      const isDate   = ci === 2;
+      body(ws2, rowNum, ci + 1, val, even, {
+        ...(isPaid ? { font: { ...bodyFont, bold: true, color: { argb: r.paid ? FOREST : RED } } } : {}),
+        ...(isTotal ? { font: { ...bodyFont, bold: true }, numFmt: "€#,##0", alignment: { horizontal: "center", vertical: "middle" } } : {}),
+        ...(isDate  ? { numFmt: "dd-mmm-yyyy", alignment: { horizontal: "center", vertical: "middle" } } : {}),
+        ...(bg as Partial<ExcelJS.Style>),
+      });
+    });
+
+    ws2.getRow(rowNum).height = 18;
+  });
+
+  // Totals footer row
+  const footerRow = regs.length + 3;
+  ws2.mergeCells(footerRow, 1, footerRow, colCount - 1);
+  const ftLabel = ws2.getCell(footerRow, 1);
+  ftLabel.value = `${regs.length} registrations · ${totalPeople} participants · ${totalMeals} meals · ${totalPaid}/${regs.length} paid`;
+  ftLabel.font  = { bold: true, size: 10, color: { argb: WHITE }, name: "Arial" };
+  ftLabel.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: FOREST } };
+  ftLabel.alignment = { vertical: "middle", indent: 1 };
+  ftLabel.border = cellBorder;
+
+  const ftTotal = ws2.getCell(footerRow, colCount);
+  ftTotal.value = totalRevenue;
+  ftTotal.font  = { bold: true, size: 10, color: { argb: WHITE }, name: "Arial" };
+  ftTotal.fill  = { type: "pattern", pattern: "solid", fgColor: { argb: FOREST } };
+  ftTotal.numFmt = "€#,##0";
+  ftTotal.alignment = { vertical: "middle", horizontal: "center" };
+  ftTotal.border = cellBorder;
+  ws2.getRow(footerRow).height = 22;
+
+  // ── Download ────────────────────────────────────────────────────────────
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob   = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url    = URL.createObjectURL(blob);
+  const a      = document.createElement("a");
+  const stamp  = new Date().toISOString().slice(0, 10);
+  a.href       = url;
+  a.download   = `RIST-2026-registrations-${stamp}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function AdminDashboard({
@@ -1168,13 +1438,18 @@ export default function AdminDashboard({
           );
         })()}
 
-        {/* ── Print button ── */}
+        {/* ── Print / Export buttons ── */}
         {regs.length > 0 && (
-          <div className="mt-4 sm:mt-6 flex justify-end">
+          <div className="mt-4 sm:mt-6 flex justify-end gap-2 sm:gap-3">
             <button onClick={() => printRegistrations(regs)}
               className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border text-xs sm:text-sm transition-colors duration-200 ${t("border-white/20 text-white/60 hover:bg-white/8 hover:text-white", "border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-800")}`}>
               <Printer size={13} />
               Print Registration List
+            </button>
+            <button onClick={() => exportToExcel(regs)}
+              className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#1D6F42] text-white text-xs sm:text-sm font-semibold hover:bg-[#155233] active:scale-[0.98] transition-[background-color,transform] duration-200 shadow-[0_4px_16px_rgba(29,111,66,0.35)]">
+              <FileSpreadsheet size={13} />
+              Export to Excel
             </button>
           </div>
         )}
