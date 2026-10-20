@@ -68,16 +68,10 @@ export default function Hero() {
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center w-full sm:w-auto">
           <Link
-            href="#register"
-            className="w-full sm:w-auto text-center px-8 py-3 sm:py-3.5 rounded-full bg-sage text-forest font-semibold text-sm tracking-wide hover:bg-sage-light active:scale-[0.98] transition-[background-color,transform] duration-200 shadow-[0_8px_32px_rgba(82,183,136,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
-          >
-            {tr.cta1}
-          </Link>
-          <Link
-            href="#about"
+            href="#gallery"
             className="w-full sm:w-auto text-center px-8 py-3 sm:py-3.5 rounded-full border border-white/30 text-white font-medium text-sm tracking-wide hover:bg-white/10 hover:border-white/50 active:scale-[0.98] transition-[background-color,border-color,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
-            {tr.cta2}
+            {tr.galleryCta}
           </Link>
         </div>
 

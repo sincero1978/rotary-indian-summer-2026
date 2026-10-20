@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   LogOut, Plus, Trash2, X, Users, Euro, UtensilsCrossed,
   Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronUp, RefreshCw,
-  KeyRound, Eye, EyeOff, Printer, BarChart2, Sun, Moon, FileSpreadsheet,
+  KeyRound, Eye, EyeOff, Printer, BarChart2, Sun, Moon, FileSpreadsheet, Images,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import type { StoredRegistration } from "@/lib/admin-types";
 import type * as ExcelJS from "exceljs";
+import GalleryManager from "./GalleryManager";
 
 // ─── Responsive width hook ────────────────────────────────────────────────────
 // Used to scale chart fonts and conditionally show/hide chart labels.
@@ -1150,6 +1151,7 @@ export default function AdminDashboard({
   const [showUserMenu, setShowUserMenu]       = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [paidUpdating, setPaidUpdating] = useState<Set<string>>(new Set());
+  const [activeView, setActiveView] = useState<"registrations" | "gallery">("registrations");
 
   // ── Theme ──────────────────────────────────────────────────────────────────
   const [isDark, setIsDark] = useState(true); // default: dark
@@ -1282,6 +1284,13 @@ export default function AdminDashboard({
       </header>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-10 py-5 sm:py-8">
+
+        <div className={`mb-6 flex gap-2 border-b pb-3 ${t("border-white/10", "border-gray-200")}`}>
+          <button onClick={() => setActiveView("registrations")} className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${activeView === "registrations" ? "bg-sage text-forest" : t("text-white/55 hover:bg-white/8 hover:text-white", "text-gray-500 hover:bg-gray-100 hover:text-gray-900")}`}>Registrations</button>
+          <button onClick={() => setActiveView("gallery")} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${activeView === "gallery" ? "bg-sage text-forest" : t("text-white/55 hover:bg-white/8 hover:text-white", "text-gray-500 hover:bg-gray-100 hover:text-gray-900")}`}><Images size={15} />Gallery</button>
+        </div>
+
+        {activeView === "gallery" ? <GalleryManager isDark={isDark} /> : <>
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
@@ -1453,6 +1462,7 @@ export default function AdminDashboard({
             </button>
           </div>
         )}
+        </>}
       </main>
 
       {/* ── Modals ── */}

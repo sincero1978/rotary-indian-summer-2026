@@ -15,7 +15,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://images.unsplash.com https://placehold.co",
+      "img-src 'self' data: blob: https://images.unsplash.com https://placehold.co https://*.public.blob.vercel-storage.com",
       "media-src 'self' https://assets.mixkit.co",
       "connect-src 'self'",
       "frame-ancestors 'none'",

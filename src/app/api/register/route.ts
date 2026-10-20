@@ -440,6 +440,10 @@ function sanitise(val: unknown, maxLen = 120): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (process.env.REGISTRATIONS_OPEN !== "true") {
+    return NextResponse.json({ error: "Registration for the 9th Rotary Indian Summer Rally is closed." }, { status: 410 });
+  }
+
   try {
     const raw = await req.json();
 

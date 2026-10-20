@@ -16,13 +16,13 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Rotary Indian Summer Rally 2026 | Luxembourg",
+  title: "Rotary Indian Summer Rally Archive | Luxembourg",
   description:
-    "Join the Rotary Indian Summer Rally 2026 — a curated classic car journey through the golden autumn landscapes of Luxembourg and the Moselle Valley. 6 September 2026, start 10h00, briefing 10h45.",
+    "Explore the 9th Rotary Indian Summer Rally photo gallery and archive past editions from the Rotary Club Bascharage-Kordall.",
   openGraph: {
-    title: "Rotary Indian Summer Rally 2026",
+    title: "9th Rotary Indian Summer Rally Archive",
     description:
-      "A classic car rally through Luxembourg's autumn splendour. 6 September 2026.",
+      "Photos and memories from the Rotary Club Bascharage-Kordall's 9th charity rally.",
     type: "website",
   },
 };

@@ -2,8 +2,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
 import HighlightCards from "@/components/HighlightCards";
-import Gallery from "@/components/Gallery";
-import RegisterCTA from "@/components/RegisterCTA";
+import RallyArchive from "@/components/RallyArchive";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -14,8 +13,7 @@ export default function Home() {
         <Hero />
         <About />
         <HighlightCards />
-        <Gallery />
-        <RegisterCTA />
+        <RallyArchive />
       </main>
       <Footer />
     </>

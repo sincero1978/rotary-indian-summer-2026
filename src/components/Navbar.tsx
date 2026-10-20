@@ -22,7 +22,6 @@ export default function Navbar() {
   const navLinks = [
     { label: tr.about, href: "#about" },
     { label: tr.gallery, href: "#gallery" },
-    { label: tr.register, href: "#register" },
     { label: tr.contact, href: "#contact" },
   ];
 
@@ -76,12 +75,7 @@ export default function Navbar() {
             ))}
           </div>
 
-          <Link
-            href="#register"
-            className="ml-2 px-5 py-2 rounded-full text-sm font-semibold bg-sage text-forest hover:bg-sage-light active:scale-95 transition-[background-color,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage"
-          >
-            {tr.registerNow}
-          </Link>
+          <Link href="#gallery" className="ml-2 px-5 py-2 rounded-full text-sm font-semibold bg-sage text-forest hover:bg-sage-light active:scale-95 transition-[background-color,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage">{tr.gallery}</Link>
         </nav>
 
         {/* Mobile right side */}
@@ -130,13 +124,7 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="#register"
-            onClick={() => setMenuOpen(false)}
-            className="mt-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-sage text-forest text-center hover:bg-sage-light transition-colors"
-          >
-            {tr.registerNow}
-          </Link>
+          <Link href="#gallery" onClick={() => setMenuOpen(false)} className="mt-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-sage text-forest text-center hover:bg-sage-light transition-colors">{tr.gallery}</Link>
         </nav>
       </div>
     </header>

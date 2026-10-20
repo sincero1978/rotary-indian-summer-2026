@@ -86,7 +86,7 @@ function inputClass(error?: string) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function RegisterCTA() {
+export function LegacyRegistrationForm() {
   const { lang } = useLang();
   const tr = t[lang].register;
   const topRef = useRef<HTMLDivElement>(null);
@@ -539,5 +539,25 @@ export default function RegisterCTA() {
       </div>
     </section>
     </>
+  );
+}
+
+export default function RegisterCTA() {
+  const { lang } = useLang();
+  const copy = {
+    en: { title: "Registration is closed", body: "The 9th Rotary Indian Summer Rally has taken place. Browse the gallery and archive to relive the event." },
+    fr: { title: "Les inscriptions sont closes", body: "Le 9e Rotary Indian Summer Rally a eu lieu. Consultez la galerie et les archives pour revivre l’événement." },
+    lu: { title: "D’Umeldung ass zou", body: "Den 9. Rotary Indian Summer Rally ass ofgeschloss. Kuckt d’Galerie an den Archiv fir d’Evenement nach eng Kéier z’erliewen." },
+  }[lang];
+
+  return (
+    <section id="register" className="bg-forest px-6 py-20 text-center text-white">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-white/15 bg-white/5 px-8 py-12">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-sage">Rotary Indian Summer Rally</p>
+        <h2 className="font-heading text-3xl font-bold sm:text-4xl">{copy.title}</h2>
+        <p className="mx-auto mt-4 max-w-xl leading-relaxed text-white/65">{copy.body}</p>
+        <a href="#gallery" className="mt-7 inline-flex rounded-full bg-sage px-6 py-3 text-sm font-semibold text-forest transition-colors hover:bg-sage-light">{lang === "en" ? "View rally gallery" : lang === "fr" ? "Voir la galerie" : "Rally-Galerie kucken"}</a>
+      </div>
+    </section>
   );
 }

@@ -16,7 +16,6 @@ export default function Footer() {
   const navLinks = [
     { label: navTr.about, href: "#about" },
     { label: navTr.gallery, href: "#gallery" },
-    { label: navTr.register, href: "#register" },
     { label: navTr.contact, href: "#contact" },
   ];
 
